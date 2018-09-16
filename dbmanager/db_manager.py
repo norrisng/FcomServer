@@ -1,18 +1,17 @@
 import sqlite3
 import secrets
 import os
-import asyncio
 import time
 from dbmodels.user_registration import UserRegistration
 from dbmodels.fsd_message import FsdMessage
-from discord import User, DMChannel, Client
+from discord import DMChannel, Client
 from typing import List
 
 REGISTRATION_PATH = os.path.realpath('../FcomServer/registration.db')
 MESSAGES_PATH = os.path.realpath('../FcomServer/messages.db')
 
 # This acts as a local cache for DMChannel objects.
-# This avoids the need to hit the Discord API every time a DM needs to be sent.
+# This avoids the need to reach the Discord API every time a DM needs to be sent.
 pm_channels = {}
 
 

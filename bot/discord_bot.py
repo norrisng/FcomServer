@@ -1,6 +1,4 @@
 from discord.ext import commands
-from dbmodels.fsd_message import FsdMessage
-from dbmodels.user_registration import UserRegistration
 from bot import bot_user_commands
 from dbmanager import db_manager
 import asyncio
@@ -14,12 +12,11 @@ token = token_file.read()
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s: %(message)s')
 
-# Looking for more examples? See https://github.com/Rapptz/discord.py/blob/rewrite/examples/basic_bot.py
-
 
 # Reference: https://github.com/Rapptz/discord.py/blob/rewrite/examples/background_task.py
 async def forward_messages():
-    """Retrieves submitted PMs from the DB and forwards them to the registered Discord user.
+    """
+    Retrieves submitted PMs from the DB and forwards them to the registered Discord user.
     """
 
     await bot.wait_until_ready()
@@ -31,13 +28,17 @@ async def forward_messages():
         # Iterate through queued messages (if any), and forward them via Discord DM
         if messages is not None:
             for msg in messages:
+
                 dm_user = await db_manager.get_user_record(msg.token, bot)
+
                 if dm_user is not None:
                     dm_contents = f'**{msg.sender}**:\n{msg.message}'
                     dm_channel = dm_user.channel_object
                     # TODO: https://github.com/Rapptz/discord.py/issues/623
                     await dm_channel.send(dm_contents)
+
                 else:
+                    # NOTE: the API now checks if a token's registered before inserting messages
                     logging.info(f'Token {msg.token} is not registered!')
 
         await asyncio.sleep(3)
@@ -50,12 +51,13 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    """	Handles user-issued commands via DM. All commands are case-insensitive.
-        Supports the following commands:
-            register:	Registers user to internal DB, and replies with a token.
-                        This token must be confirmed via the API within 5 mins.
-            status:     Shows the currently registered callsign (if any)
-            remove:		De-registers the user from the internal DB.
+    """
+    Handles user-issued commands via DM. All commands are case-insensitive.
+    Supports the following commands:
+        register:	Registers user to internal DB, and replies with a token.
+                    This token must be confirmed via the API within 5 mins.
+        status:     Shows the currently registered callsign (if any)
+        remove:		De-registers the user from the internal DB.
     """
     # register
     if message.content.lower() == 'register':
@@ -95,8 +97,6 @@ async def on_message(message):
 
     # test
     elif message.content.lower().startswith('test'):
-        # print(message.channel.id)
-        # print(message.channel.recipient.id)
         await message.channel.send('`beep boop`')
         usr = bot.get_user(message.channel.recipient.id)
         await usr.send("`i'm alive!`")
