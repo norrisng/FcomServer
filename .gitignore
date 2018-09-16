@@ -1,0 +1,23 @@
+## Project-specific
+
+# Discord API bot token
+bot_token.txt
+
+# SQLite DBs
+*.db
+
+## Virtualenv
+# https://github.com/github/gitignore/blob/master/Global/VirtualEnv.gitignore
+Lib
+Scripts
+pyvenv.cfg
+pip-selfcheck.json
+venv/
+
+## Python
+## https://github.com/github/gitignore/blob/master/Python.gitignore
+__pycache__/
+
+## JetBrains
+## https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
+.idea/
