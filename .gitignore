@@ -6,6 +6,9 @@ bot_token.txt
 # SQLite DBs
 *.db
 
+# Log files
+*.log
+
 ## Virtualenv
 # https://github.com/github/gitignore/blob/master/Global/VirtualEnv.gitignore
 Lib
