@@ -11,8 +11,6 @@ token_file = open('../FcomServer/bot_token.txt')
 token = token_file.read()
 
 logging.basicConfig(filename='bot.log', level=logging.INFO, format='%(asctime)s: %(message)s')
-logging.basicConfig(filename='bot.log', level=logging.INFO, format='%(asctime)s: %(message)s')
-logging.basicConfig(filename='bot.log', level=logging.INFO, format='%(asctime)s: %(message)s')
 
 
 # Reference: https://github.com/Rapptz/discord.py/blob/rewrite/examples/background_task.py
@@ -73,7 +71,7 @@ async def on_message(message):
             msg += "\n**TIP:** triple-click to quickly highlight, but delete the trailing space after pasting the token into the client."
             logging.info(
                 f'Generate token for user {message.channel.recipient.id} '
-                / '({message.channel.recipient.name}{message.channel.recipient.discriminator}): {token}')
+                '({message.channel.recipient.name}{message.channel.recipient.discriminator}): {token}')
         await message.channel.send(msg)
 
     # status
@@ -95,7 +93,7 @@ async def on_message(message):
 
         if bot_user_commands.remove_user(message.channel.recipient.id):
             msg = "Successfully deregistered! You'll no longer receive forwarded messages."
-            logging.info(f'Deregister Discord user {message.channel.recipient.id}' /
+            logging.info(f'Deregister Discord user {message.channel.recipient.id}'
                             '({message.channel.recipient.name}{message.channel.recipient.discriminator}): {token}')
         else:
             msg = "Could not unregister. Are you sure you're registered?"

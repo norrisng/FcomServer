@@ -77,8 +77,8 @@ def post_message():
         return 'ok'
 
     except KeyError:
-        error_detail = 'Missing parameter(s). Requests should include a token, and an array of message objects.' \
-                        'Each message object should include a timestamp, sender, receiver, and message (contents).'
+        error_detail = ('Missing parameter(s). Requests should include a token, and an array of message objects.'
+                        'Each message object should include a timestamp, sender, receiver, and message (contents).')
         return jsonify(status=400, detail=error_detail), 400
 
 
