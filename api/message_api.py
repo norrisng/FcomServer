@@ -23,6 +23,8 @@ def register_user():
     callsign = request.args.get('callsign')
     token = request.args.get('token')
 
+    logging.info(f'Registration request from {request.remote_addr}: {callsign}, {token}')
+
     if token is None:
         return jsonify(status=400, detail='Missing token'), 400
 
