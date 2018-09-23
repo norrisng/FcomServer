@@ -21,7 +21,6 @@ async def forward_messages():
 
     await bot.wait_until_ready()
 
-    # TODO: do not run loop before the bot is ready
     while not bot.is_closed():
         messages = db_manager.get_messages()
 
@@ -32,15 +31,16 @@ async def forward_messages():
                 dm_user = await db_manager.get_user_record(msg.token, bot)
 
                 if dm_user is not None:
-                    # if it's a frequency message, parse it into a user-friendly format
+
+                    # if it's a frequency message (i.e. @xxyyy), parse it into a user-friendly format
                     if msg.receiver.startswith('@'):
-                        # @22800 --> 122800 --> 122.800
                         freq = msg.receiver.replace('@','1')[:3] + '.' + msg.receiver[3:]
                         dm_contents = f'**{msg.sender} ({freq} MHz):**\n{msg.message}'
+
                     else:
                         dm_contents = f'**{msg.sender}**:\n{msg.message}'
+
                     dm_channel = dm_user.channel_object
-                    # TODO: https://github.com/Rapptz/discord.py/issues/623
                     await dm_channel.send(dm_contents)
 
                 else:
@@ -68,16 +68,16 @@ async def on_message(message):
     # register
     if message.content.lower() == 'register':
 
-        token = bot_user_commands.register_user(message.channel)
-        # Already registered, so no token
-        if token is None:
+        fcom_api_token = bot_user_commands.register_user(message.channel)
+
+        if fcom_api_token is None:
             msg = "You're already registered! To reset your registration, type `remove` before typing `register` again."
         else:
-            msg = f"Here's your verification code: ```{token}```Please enter it into the client within the next 5 minutes."
-            msg += "\n**TIP:** triple-click to quickly highlight, but delete the trailing space after pasting the token into the client."
+            msg = f"Here's your verification code: ```{fcom_api_token}```" +\
+                    "Please enter it into the client within the next 5 minutes.\n"
             logging.info(
                 f'Generate token for user {message.channel.recipient.id} '
-                f'({message.channel.recipient.name}#{message.channel.recipient.discriminator}): {token}')
+                f'({message.channel.recipient.name}#{message.channel.recipient.discriminator}): {fcom_api_token}')
         await message.channel.send(msg)
 
     # status
@@ -105,12 +105,6 @@ async def on_message(message):
             msg = "Could not unregister. Are you sure you're registered?"
 
         await message.channel.send(msg)
-
-    # test
-    elif message.content.lower().startswith('test'):
-        await message.channel.send('`beep boop`')
-        usr = bot.get_user(message.channel.recipient.id)
-        await usr.send("`i'm alive!`")
 
 
 def start_bot():
