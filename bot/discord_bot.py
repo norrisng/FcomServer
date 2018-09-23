@@ -32,7 +32,13 @@ async def forward_messages():
                 dm_user = await db_manager.get_user_record(msg.token, bot)
 
                 if dm_user is not None:
-                    dm_contents = f'**{msg.sender}**:\n{msg.message}'
+                    # if it's a frequency message, parse it into a user-friendly format
+                    if msg.receiver.startswith('@'):
+                        # @22800 --> 122800 --> 122.800
+                        freq = msg.receiver.replace('@','1')[:3] + '.' + msg.receiver[3:]
+                        dm_contents = f'**{msg.sender} ({freq} MHz):**\n{msg.message}'
+                    else:
+                        dm_contents = f'**{msg.sender}**:\n{msg.message}'
                     dm_channel = dm_user.channel_object
                     # TODO: https://github.com/Rapptz/discord.py/issues/623
                     await dm_channel.send(dm_contents)
