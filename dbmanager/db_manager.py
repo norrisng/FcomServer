@@ -9,6 +9,7 @@ from typing import List
 
 REGISTRATION_PATH = os.path.realpath('../FcomServer/registration.db')
 MESSAGES_PATH = os.path.realpath('../FcomServer/messages.db')
+TESTERS_PATH = os.path.realpath('../FcomServer/beta.db')
 
 # This acts as a local cache for DMChannel objects.
 # This avoids the need to reach the Discord API every time a DM needs to be sent.
@@ -220,6 +221,28 @@ def get_messages() -> List[FsdMessage]:
         message_list.append(FsdMessage(token, timestamp, sender, receiver, combined_contents))
 
     return message_list
+
+
+def is_beta_tester(discord_id: int) -> bool:
+    """
+    (CLOSED BETA ONLY) Determines if a Discord user is part of the closed beta.
+    This info is stored in a SQLite file named `testers.db`.
+
+    :param discord_id:  Discord snowflake ID of the user to check
+
+    :return:    True if a beta tester, False otherwise
+    """
+    conn = sqlite3.connect(TESTERS_PATH)
+    db = conn.cursor()
+
+    cmd = "SELECT * FROM registration where discord_id=?"
+    db.execute(cmd, (discord_id,))
+    user = db.fetchone()
+    conn.close()
+    if user is not None:
+        return True
+    else:
+        return False
 
 
 def user_exists(discord_id: int) -> bool:

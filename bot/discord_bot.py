@@ -65,8 +65,12 @@ async def on_message(message):
         status:     Shows the currently registered callsign (if any)
         remove:		De-registers the user from the internal DB.
     """
+    # CLOSED BETA ONLY: check if user is an approved tester
+    if not db_manager.is_beta_tester(message.channel.recipient.id):
+        await message.channel.send('You are not a tester!')
+
     # register
-    if message.content.lower() == 'register':
+    elif message.content.lower() == 'register':
 
         fcom_api_token = bot_user_commands.register_user(message.channel)
 
