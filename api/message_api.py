@@ -3,6 +3,7 @@ from dbmodels.fsd_message import FsdMessage
 from dbmanager import db_manager
 import sqlite3
 import logging
+import re
 
 
 app = Flask(__name__)
@@ -59,14 +60,41 @@ def post_message():
         # TODO: support parsing of multiple messages per POST request
         message = payload['messages'][0]
 
-        timestamp = message['timestamp']
-        sender = message['sender']
-        receiver = message['receiver']
+        timestamp_raw = message['timestamp']
+        sender_raw = message['sender']
+        receiver_raw = message['receiver']
         message = message['message']
+
+        # Check timestamp
+        try:
+            timestamp = int(timestamp_raw)
+        except ValueError:
+            return jsonify(status=400, detail='Timestamp must be an integer.'), 400
+
+        # Check sender
+        sender_regex = '(\w|\d|_|-)+'
+
+        if re.match(sender_regex, sender_raw, re.ASCII):
+            sender = sender_raw
+        else:
+            return jsonify(status=400, detail='Sender field must be 20 characters or less,'
+                                              'and can only contain letters, numbers, dashes, and underscores.'), \
+                   400
+
+        # Check receiver (we also have to accept frequencies; e.g. @22800)
+        receiver_regex = '(@\d{5})|(\w|\d|_|-)+'
+
+        if re.match(receiver_regex, receiver_raw, re.ASCII):
+            receiver = receiver_raw
+        else:
+            return jsonify(status=400, detail='Receiver field must be 20 characters or less,'
+                                              'and can only contain letters, numbers, dashes, and underscores.'
+                                              'Alternatively, it may begin with an "@" and contain precisely 5 numerical digits'), \
+                   400
 
         logging.info(f'{request.remote_addr} - - {token}, {timestamp}, {sender} > {receiver}: "{message}"')
 
-        # Abort if token not associated with any Discord user
+        # Check token - if it's not associated with any Discord user, return an error
         discord_user = db_manager.get_user_registration(token)
         if discord_user is None:
             logging.info(f'{request.remote_addr} - - token "{token}" not found!')
