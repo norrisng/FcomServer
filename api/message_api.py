@@ -12,6 +12,11 @@ logging.basicConfig(filename='api.log', level=logging.INFO, format='%(asctime)s:
 
 @app.route('/api/v1/test', methods=['GET'])
 def test():
+    """
+    Simple test endpoint for checking if the API is working.
+
+    :return: "Success"
+    """
     return "Success"
 
 
@@ -19,7 +24,9 @@ def test():
 def register_user():
     """
     Marks the user as registered in the registration DB, and returns info on the Discord user.
-    :return:
+
+    :return: JSON object containing the token, Discord ID, Discord name, and callsign.
+            If the token doesn't exist, an error is returned.
     """
     callsign = request.args.get('callsign')
     token = request.args.get('token')
@@ -48,6 +55,11 @@ def register_user():
 
 @app.route('/api/v1/messaging', methods=['POST'])
 def post_message():
+    """
+    Forwards a message to a Discord user.
+
+    :return: 'ok' on success. A 400 error with details is returned if the request is in the incorrect format.
+    """
     if request.content_type != 'application/json':
         return jsonify(status=400, detail='Only JSON is supported at this time.'), 400
 
