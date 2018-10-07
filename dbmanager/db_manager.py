@@ -9,7 +9,7 @@ from typing import List
 
 REGISTRATION_PATH = os.path.realpath('../FcomServer/registration.db')
 MESSAGES_PATH = os.path.realpath('../FcomServer/messages.db')
-TESTERS_PATH = os.path.realpath('../FcomServer/beta.db')
+TESTERS_PATH = os.path.realpath('../FcomServer/testers.db')
 
 # This acts as a local cache for DMChannel objects.
 # This avoids the need to reach the Discord API every time a DM needs to be sent.
