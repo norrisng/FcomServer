@@ -40,8 +40,7 @@ def add_discord_user(discord_id: int, discord_name: str, channel_object: DMChann
         token = secrets.token_urlsafe(32)
 
         cmd = "INSERT INTO registration VALUES (?,?,?,?,0,NULL)"
-        cmd = "INSERT INTO registration VALUES (?,?,?,?,0,NULL)"
-        db.execute(cmd, (time.time(), token, discord_id, discord_name))
+        db.execute(cmd, (int(time.time()), token, discord_id, discord_name))
         conn.commit()
         conn.close()
         pm_channels[discord_id] = channel_object
