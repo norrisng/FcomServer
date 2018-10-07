@@ -39,8 +39,9 @@ def add_discord_user(discord_id: int, discord_name: str, channel_object: DMChann
     else:
         token = secrets.token_urlsafe(32)
 
-        cmd = "INSERT INTO registration VALUES (?,?,?,0,NULL)"
-        db.execute(cmd, (token, discord_id, discord_name))
+        cmd = "INSERT INTO registration VALUES (?,?,?,?,0,NULL)"
+        cmd = "INSERT INTO registration VALUES (?,?,?,?,0,NULL)"
+        db.execute(cmd, (time.time(), token, discord_id, discord_name))
         conn.commit()
         conn.close()
         pm_channels[discord_id] = channel_object
@@ -67,8 +68,8 @@ def confirm_discord_user(token: str, callsign: str) -> bool:
         conn.close()
         return False
     else:
-        cmd = "UPDATE registration SET callsign=?, is_verified=1 WHERE token=?"
-        db.execute(cmd, (callsign, token))
+        cmd = "UPDATE registration SET last_updated=?, callsign=?, is_verified=1 WHERE token=?"
+        db.execute(cmd, (time.time(), callsign, token))
         conn.commit()
         conn.close()
         return True
@@ -96,11 +97,12 @@ async def get_user_record(param, client: Client = None) -> UserRegistration:
             return None
         else:
             # user = UserRegistration()
-            token = result[0]
-            discord_id = result[1]
-            discord_name = result[2]
-            is_verified = result[3]
-            callsign = result[4]
+            last_updated = result[0]
+            token = result[1]
+            discord_id = result[2]
+            discord_name = result[3]
+            is_verified = result[4]
+            callsign = result[5]
 
             # If a client isn't provided, assume that this function is being called by the API,
             # and therefore doesn't required Discord-related features
@@ -109,7 +111,7 @@ async def get_user_record(param, client: Client = None) -> UserRegistration:
             else:
                 channel_object = None
 
-            return UserRegistration(token, discord_id, discord_name, is_verified, callsign, channel_object)
+            return UserRegistration(last_updated, token, discord_id, discord_name, is_verified, callsign, channel_object)
 
 
 def get_user_registration(req_token: str) -> UserRegistration:
@@ -127,13 +129,37 @@ def get_user_registration(req_token: str) -> UserRegistration:
         return None
     else:
         # user = UserRegistration()
-        token = result[0]
-        discord_id = result[1]
-        discord_name = result[2]
-        is_verified = result[3]
-        callsign = result[4]
+        last_updated = result[0]
+        token = result[1]
+        discord_id = result[2]
+        discord_name = result[3]
+        is_verified = result[4]
+        callsign = result[5]
 
-    return UserRegistration(token, discord_id, discord_name, is_verified, callsign, None)
+    return UserRegistration(last_updated, token, discord_id, discord_name, is_verified, callsign, None)
+
+
+def remove_stale_users():
+    """
+    Remove unconfirmed users older than 5 minutes, and confirmed users registered for over 24 hours
+    """
+    # calculate the unix time 5 minutes before the current time
+    latest_timestamp_unconfirmed = int(time.time()) - 5*60      # 5 minutes (5 min * 60 s)
+    latest_timestamp_confirmed = int(time.time()) - 24*60*60    # 24 hours  (24 h * 60 min * 60 s)
+
+    conn = sqlite3.connect(REGISTRATION_PATH)
+    db = conn.cursor()
+    cmd = """
+    DELETE FROM 
+        registration 
+    WHERE 
+        (is_verified IS false AND last_updated <= ?) OR
+        (is_verified IS true AND last_updated <= ?)
+    ;
+    """
+    db.execute(cmd, (latest_timestamp_confirmed, latest_timestamp_unconfirmed))
+    conn.commit()
+    conn.close()
 
 
 def remove_discord_user(discord_id: int) -> bool:
