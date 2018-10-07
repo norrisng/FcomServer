@@ -16,7 +16,7 @@ logging.basicConfig(filename='bot.log', level=logging.INFO, format='%(asctime)s:
 # Reference: https://github.com/Rapptz/discord.py/blob/rewrite/examples/background_task.py
 async def forward_messages():
     """
-    Retrieves submitted PMs from the DB and forwards them to the registered Discord user.
+    Background task that retrieves submitted PMs from the DB and forwards them to the registered Discord user.
     """
 
     await bot.wait_until_ready()
@@ -48,6 +48,16 @@ async def forward_messages():
                     logging.info(f'Token {msg.token} is not registered!')
 
         await asyncio.sleep(3)
+
+
+async def prune_registrations():
+    """
+    Remove registrations that are either unconfirmed and older than 5 minutes,
+    or confirmed and older than 24 hours.
+
+    """
+    db_manager.remove_stale_users()
+    await asyncio.sleep(60*5)
 
 
 @bot.event
@@ -117,6 +127,7 @@ def start_bot():
     :return:
     """
     bot.loop.create_task(forward_messages())
+    bot.loop.create_task(prune_registrations())
     bot.run(token)
 
 

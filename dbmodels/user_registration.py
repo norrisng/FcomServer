@@ -4,9 +4,10 @@ from discord import DMChannel
 class UserRegistration:
     """Represents a Discord user in the registration DB"""
 
-    def __init__(self, token: str, discord_id: int, discord_name: str, is_verified, callsign: str, channel_object: DMChannel):
+    def __init__(self, last_updated: str, token: str, discord_id: int, discord_name: str, is_verified, callsign: str, channel_object: DMChannel):
         """
 
+        :param last_updated:    When the registration record was last updated.
         :param token:           Token associated with the Discord user in the registration DB
         :param discord_id:      Discord Snowflake ID for the Discord user
         :param discord_name:    Display name of the Discord user, including the discriminator (e.g. username#001)
@@ -14,6 +15,7 @@ class UserRegistration:
         :param callsign:        Callsign that the user is logged into VATSIM/IVAO as
         :param channel_object:  The DMChannel associated with the Discord user
         """
+        self.last_updated = last_updated
         self.token = token
         self.discord_id = discord_id
         self.discord_name = discord_name

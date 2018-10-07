@@ -10,6 +10,7 @@ def init_registration_db():
     db = conn.cursor()
     registration_schema = """
                             CREATE TABLE IF NOT EXISTS registration ( 
+                                    last_updated INTEGER,
                                     token TEXT, 
                                     discord_id INTEGER UNIQUE, 
                                     discord_name TEXT, 
