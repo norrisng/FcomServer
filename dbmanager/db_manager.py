@@ -139,6 +139,29 @@ def get_user_registration(req_token: str) -> UserRegistration:
     return UserRegistration(last_updated, token, discord_id, discord_name, is_verified, callsign, None)
 
 
+def remove_stale_users():
+    """
+    Remove unconfirmed users older than 5 minutes, and confirmed users registered for over 24 hours
+    """
+    # calculate the unix time 5 minutes before the current time
+    latest_timestamp_unconfirmed = int(time.time()) - 5*60      # 5 minutes (5 min * 60 s)
+    latest_timestamp_confirmed = int(time.time()) - 24*60*60    # 24 hours  (24 h * 60 min * 60 s)
+
+    conn = sqlite3.connect(REGISTRATION_PATH)
+    db = conn.cursor()
+    cmd = """
+    DELETE FROM 
+        registration 
+    WHERE 
+        (is_verified IS false AND last_updated <= ?) OR
+        (is_verified IS true AND last_updated <= ?)
+    ;
+    """
+    db.execute(cmd, (latest_timestamp_confirmed, latest_timestamp_unconfirmed))
+    conn.commit()
+    conn.close()
+
+
 def remove_discord_user(discord_id: int) -> bool:
     """
     Removes the specified user from the DB.
