@@ -261,7 +261,7 @@ def is_beta_tester(discord_id: int) -> bool:
     conn = sqlite3.connect(TESTERS_PATH)
     db = conn.cursor()
 
-    cmd = "SELECT * FROM registration where discord_id=?"
+    cmd = "SELECT * FROM testers where discord_id=?"
     db.execute(cmd, (discord_id,))
     user = db.fetchone()
     conn.close()
