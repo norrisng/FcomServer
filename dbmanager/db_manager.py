@@ -1,3 +1,4 @@
+import mysql.connector as mariadb
 import sqlite3
 import secrets
 import os
@@ -7,9 +8,19 @@ from dbmodels.fsd_message import FsdMessage
 from discord import DMChannel, Client
 from typing import List
 
+# TODO: comment out and delete sqlite paths
 REGISTRATION_PATH = os.path.realpath('../FcomServer/registration.db')
 MESSAGES_PATH = os.path.realpath('../FcomServer/messages.db')
 TESTERS_PATH = os.path.realpath('../FcomServer/testers.db')
+
+# MariaDB
+DB_URI = 'localhost'
+DB_USERNAME = os.environ['FCOM_DB_USERNAME']
+DB_PASSWORD = os.environ['FCOM_DB_PASSWORD']
+
+TESTERS_DB = 'testers'
+REGISTRATION_DB = 'registration'
+MESSAGES_DB = 'messages'
 
 # This acts as a local cache for DMChannel objects.
 # This avoids the need to reach the Discord API every time a DM needs to be sent.
@@ -25,11 +36,13 @@ def add_discord_user(discord_id: int, discord_name: str, channel_object: DMChann
     :param channel_object:  DMChannel object for the specified Discord user
     :return:                Token, if the user isn't already in the DB
     """
-    conn = sqlite3.connect(REGISTRATION_PATH)
+    # conn = sqlite3.connect(REGISTRATION_PATH)
+    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=TESTERS_DB)
+
     db = conn.cursor()
 
     # First, check if the user is already registered
-    cmd = "SELECT * FROM registration where discord_id=?"
+    cmd = "SELECT * FROM registration where discord_id=%s"
     db.execute(cmd, (discord_id,))
     user = db.fetchone()
 
@@ -39,10 +52,12 @@ def add_discord_user(discord_id: int, discord_name: str, channel_object: DMChann
     else:
         token = secrets.token_urlsafe(32)
 
-        cmd = "INSERT INTO registration VALUES (?,?,?,?,0,NULL)"
+        cmd = "INSERT INTO registration VALUES (%s,%s,%s,%s,0,NULL)"
         db.execute(cmd, (int(time.time()), token, discord_id, discord_name))
         conn.commit()
         conn.close()
+
+        # Save the channel object to the internal cache
         pm_channels[discord_id] = channel_object
         return token
 
@@ -55,11 +70,13 @@ def confirm_discord_user(token: str, callsign: str) -> bool:
     :param callsign: the callsign that the Discord user wants to register
     :return:         True if success, False otherwise
     """
-    conn = sqlite3.connect(REGISTRATION_PATH)
+    # conn = sqlite3.connect(REGISTRATION_PATH)
+    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=REGISTRATION_DB)
+
     db = conn.cursor()
 
     # First, check if the token exists
-    cmd = "SELECT * FROM registration WHERE token=?"
+    cmd = "SELECT * FROM registration WHERE token=%s"
     db.execute(cmd, (token,))
     user = db.fetchone()
 
@@ -67,7 +84,7 @@ def confirm_discord_user(token: str, callsign: str) -> bool:
         conn.close()
         return False
     else:
-        cmd = "UPDATE registration SET last_updated=?, callsign=?, is_verified=1 WHERE token=?"
+        cmd = "UPDATE registration SET last_updated=%s, callsign=%s, is_verified=1 WHERE token=%s"
         db.execute(cmd, (time.time(), callsign, token))
         conn.commit()
         conn.close()
@@ -84,8 +101,8 @@ async def get_user_record(param, client: Client = None) -> UserRegistration:
     :param client:  The bot object
     :return:        UserRegistration object if in DB, None otherwise
     """
-    is_int = isinstance(param, int)
-    is_str = isinstance(param, str)
+    # is_int = isinstance(param, int)
+    # is_str = isinstance(param, str)
 
     if not (isinstance(param, int) or isinstance(param, str)):
         return None
@@ -146,14 +163,16 @@ def remove_stale_users():
     latest_timestamp_unconfirmed = int(time.time()) - 5*60      # 5 minutes (5 min * 60 s)
     latest_timestamp_confirmed = int(time.time()) - 24*60*60    # 24 hours  (24 h * 60 min * 60 s)
 
-    conn = sqlite3.connect(REGISTRATION_PATH)
+    # conn = sqlite3.connect(REGISTRATION_PATH)
+    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=REGISTRATION_DB)
+
     db = conn.cursor()
     cmd = """
     DELETE FROM 
         registration 
     WHERE 
-        (is_verified IS false AND last_updated <= ?) OR
-        (is_verified IS true AND last_updated <= ?)
+        (is_verified IS false AND last_updated <= %s) OR
+        (is_verified IS true AND last_updated <= %s)
     ;
     """
     db.execute(cmd, (latest_timestamp_confirmed, latest_timestamp_unconfirmed))
@@ -171,10 +190,19 @@ def remove_discord_user(discord_id: int) -> bool:
     if not user_exists(discord_id):
         return False
     else:
-        conn = sqlite3.connect(REGISTRATION_PATH)
+        # conn = sqlite3.connect(REGISTRATION_PATH)
+        conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=REGISTRATION_DB)
+
         db = conn.cursor()
-        cmd = "DELETE FROM registration WHERE discord_id=?"
-        db.execute(cmd,(discord_id,))
+        cmd = "DELETE FROM registration WHERE discord_id=%s"
+        try:
+            db.execute(cmd,(discord_id,))
+        # If there's still messages in the DB, wait a bit, then try again.
+        # There's a foreign key constraint on the messages/registration DBs.
+        except mariadb.IntegrityError:
+            time.sleep(5)
+            db.execute(cmd, (discord_id,))
+
         conn.commit()
         conn.close()
         try:
@@ -185,9 +213,16 @@ def remove_discord_user(discord_id: int) -> bool:
 
 
 def insert_message(msg: FsdMessage):
-    conn = sqlite3.connect(MESSAGES_PATH)
+    # conn = sqlite3.connect(MESSAGES_PATH)
+    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=MESSAGES_DB)
+
     db = conn.cursor()
-    cmd = "INSERT INTO messages(insert_time, token, timestamp, sender, receiver, message) VALUES (?, ?, ?, ?, ?, ?)"
+    # cmd = "INSERT INTO messages(insert_time, token, timestamp, sender, receiver, message) VALUES (?, ?, ?, ?, ?, ?)"
+    cmd = """   INSERT INTO 
+                    messages(token, time_received, sender, receiver, message) 
+                VALUES 
+                    (%s, FROM_UNIXTIME(%s), %s, %s, %s)
+            """
     db.execute(cmd, (int(time.time()), msg.token, msg.timestamp, msg.sender, msg.receiver, msg.message))
     conn.commit()
     conn.close()
@@ -204,47 +239,103 @@ def get_messages() -> List[FsdMessage]:
                 and sorted by registration token, then by arrival order
                 (both in ascending order).
     """
-    connection = sqlite3.connect(MESSAGES_PATH)
-    connection.isolation_level = None
-    cursor = connection.cursor()
+    # Old SQLite stuff
+    # conn = sqlite3.connect(MESSAGES_PATH)
+    # conn.isolation_level = None
 
-    cursor.execute("BEGIN IMMEDIATE TRANSACTION;")
+    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=MESSAGES_DB)
+    cursor = conn.cursor()
+
+    # Old SQLLite stuff
+    # cursor.execute("BEGIN IMMEDIATE TRANSACTION;")
+    # cursor.execute("""SELECT
+    #                       token,
+    #                       timestamp,
+    #                       sender,
+    #                       receiver,
+    #                       GROUP_CONCAT(message,'\n')
+    #                   FROM messages
+    #                   GROUP BY
+    #                       token, sender
+    #                   ORDER BY token ASC, id ASC;
+    #               """)
+
+    # TODO: implement a discord_id field in FsdMessage so that we don't need to make a separate query
+    # cursor.execute("""SELECT
+    #                         MAX(id),
+    #                         discord_id,
+    #                         messages.token,
+    #                         time_received,
+    #                         sender,
+    #                         receiver,
+    #                         GROUP_CONCAT(message ORDER BY id SEPARATOR ' / ') as message_contents
+    #                     FROM messages
+    #                     LEFT JOIN
+    #                         registration on messages.token = registration.token
+    #                     GROUP BY
+    #                         token, sender
+    #                     ORDER BY insert_time asc;
+    #                 """)
+
+    # NOTE: until we've implemented discord_id in FsdMessage, use NULL as a placeholder,
+    #       so that the tuple indexes remain constant.
     cursor.execute("""SELECT 
-                          token, 
-                          timestamp, 
-                          sender, 
-                          receiver, 
-                          GROUP_CONCAT(message,'\n')
-                      FROM messages
-                      GROUP BY 
-                          token, sender
-                      ORDER BY token ASC, id ASC;                      
-                  """)
+                                MAX(id),
+                                NULL,
+                                messages.token, 
+                                time_received, 
+                                sender, 
+                                receiver, 
+                                GROUP_CONCAT(message ORDER BY id SEPARATOR '\n') as message_contents
+                            FROM messages
+                            --LEFT JOIN 
+                                --registration on messages.token = registration.token
+                            GROUP BY 
+                                token, sender
+                            ORDER BY insert_time asc;
+                        """)
+
     messages = cursor.fetchall()
 
-    cursor.execute("SELECT MAX(id) FROM messages")
-    most_recent_id = cursor.fetchone()[0]
+    # Old SQLite stuff
+    # cursor.execute("SELECT MAX(id) FROM messages")
+    # most_recent_id = cursor.fetchone()[0]
 
-    cmd = "DELETE FROM messages WHERE id <= ?;"
+    most_recent_id = messages[-1][0]
+
+    cmd = "DELETE FROM messages WHERE id <= %s;"
     cursor.execute(cmd, (most_recent_id,))
-    cursor.execute("COMMIT;")
 
-    connection.close()
+    # Old SQLite stuff
+    # cursor.execute("COMMIT;")
+
+    conn.commit()
+    conn.close()
 
     # This is the list that gets returned
     message_list = []
 
     # Parse returned results into FsdMessage objects
-    # DB schema:    (id, insert_time, token, timestamp, sender, receiver, message)
-    # FsdMessage:   (token, timestamp, sender, receiver, message)
+    # SQLite DB schema:
+    #   (id, insert_time, token, timestamp, sender, receiver, message)
+    # MariaDB results schema:
+    #   (MAX(id), discord_id, messages.token, time_received, sender, receiver, message)
+    # FsdMessage:
+    #   (token, timestamp, sender, receiver, message)
     for msg in messages:
-        token = msg[0]
-        timestamp = msg[1]
-        sender = msg[2]
-        receiver = msg[3]
-        combined_contents = msg[4]
-        message_list.append(FsdMessage(token, timestamp, sender, receiver, combined_contents))
+        # token = msg[0]
+        # timestamp = msg[1]
+        # sender = msg[2]
+        # receiver = msg[3]
+        # combined_contents = msg[4]
 
+        token = msg[2]
+        timestamp = msg[3]
+        sender = msg[4]
+        receiver = msg[5]
+        combined_contents = msg[6]
+
+        message_list.append(FsdMessage(token, timestamp, sender, receiver, combined_contents))
     return message_list
 
 
@@ -257,10 +348,11 @@ def is_beta_tester(discord_id: int) -> bool:
 
     :return:    True if a beta tester, False otherwise
     """
-    conn = sqlite3.connect(TESTERS_PATH)
+    # conn = sqlite3.connect(TESTERS_PATH)
+    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=TESTERS_DB)
     db = conn.cursor()
 
-    cmd = "SELECT * FROM testers where discord_id=?"
+    cmd = "SELECT * FROM testers where discord_id=%s"
     db.execute(cmd, (discord_id,))
     user = db.fetchone()
     conn.close()
@@ -278,13 +370,14 @@ def user_exists(discord_id: int) -> bool:
     :return:            True if it exists, False otherwise
     """
 
-    connection = sqlite3.connect(REGISTRATION_PATH)
-    cursor = connection.cursor()
-    cmd = "SELECT * FROM registration WHERE discord_id=?;"
+    # conn = sqlite3.connect(REGISTRATION_PATH)
+    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=REGISTRATION_DB)
+    cursor = conn.cursor()
+    cmd = "SELECT * FROM registration WHERE discord_id=%s;"
     cursor.execute(cmd,(discord_id,))
     user = cursor.fetchone()
 
-    connection.close()
+    conn.close()
 
     if user is None:
         return False
@@ -297,17 +390,19 @@ def get_user_record_tuple(param) -> ():
     Internal method for retrieving the user registration record from the DB.
     :return:
     """
-    conn = sqlite3.connect(REGISTRATION_PATH)
+    # conn = sqlite3.connect(REGISTRATION_PATH)
+    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=REGISTRATION_DB)
+
     db = conn.cursor()
 
     # discord_id provided
     if isinstance(param, int):
-        cmd = "SELECT * FROM registration WHERE discord_id=?"
+        cmd = "SELECT * FROM registration WHERE discord_id=%s"
 
     # token provided
     # else:
     elif isinstance(param, str):
-        cmd = "SELECT * FROM registration WHERE token=?"
+        cmd = "SELECT * FROM registration WHERE token=%s"
     else:
         return None
 
