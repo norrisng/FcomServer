@@ -73,8 +73,8 @@ def confirm_discord_user(token: str, callsign: str) -> bool:
         conn.close()
         return False
     else:
-        cmd = "UPDATE registration SET last_updated=%s, callsign=%s, is_verified=1 WHERE token=%s"
-        db.execute(cmd, (time.time(), callsign, token))
+        cmd = "UPDATE registration SET callsign=%s, is_verified=1 WHERE token=%s"
+        db.execute(cmd, (callsign, token))
         conn.commit()
         conn.close()
         return True
