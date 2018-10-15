@@ -195,13 +195,7 @@ def remove_discord_user(discord_id: int) -> bool:
 
         db = conn.cursor()
         cmd = "DELETE FROM registration WHERE discord_id=%s"
-        try:
-            db.execute(cmd,(discord_id,))
-        # If there's still messages in the DB, wait a bit, then try again.
-        # There's a foreign key constraint on the messages/registration DBs.
-        except mariadb.IntegrityError:
-            time.sleep(5)
-            db.execute(cmd, (discord_id,))
+        db.execute(cmd,(discord_id,))
 
         conn.commit()
         conn.close()
