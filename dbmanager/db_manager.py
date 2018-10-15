@@ -1,5 +1,4 @@
 import mysql.connector as mariadb
-import sqlite3
 import secrets
 import os
 import time
@@ -8,19 +7,11 @@ from dbmodels.fsd_message import FsdMessage
 from discord import DMChannel, Client
 from typing import List
 
-# TODO: comment out and delete sqlite paths
-REGISTRATION_PATH = os.path.realpath('../FcomServer/registration.db')
-MESSAGES_PATH = os.path.realpath('../FcomServer/messages.db')
-TESTERS_PATH = os.path.realpath('../FcomServer/testers.db')
-
 # MariaDB
 DB_URI = 'localhost'
 DB_USERNAME = os.environ['FCOM_DB_USERNAME']
 DB_PASSWORD = os.environ['FCOM_DB_PASSWORD']
 
-TESTERS_DB = 'testers'
-REGISTRATION_DB = 'registration'
-MESSAGES_DB = 'messages'
 
 # This acts as a local cache for DMChannel objects.
 # This avoids the need to reach the Discord API every time a DM needs to be sent.
@@ -36,7 +27,6 @@ def add_discord_user(discord_id: int, discord_name: str, channel_object: DMChann
     :param channel_object:  DMChannel object for the specified Discord user
     :return:                Token, if the user isn't already in the DB
     """
-    # conn = sqlite3.connect(REGISTRATION_PATH)
     conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database='fcom')
 
     db = conn.cursor()
@@ -70,7 +60,6 @@ def confirm_discord_user(token: str, callsign: str) -> bool:
     :param callsign: the callsign that the Discord user wants to register
     :return:         True if success, False otherwise
     """
-    # conn = sqlite3.connect(REGISTRATION_PATH)
     conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database='fcom')
 
     db = conn.cursor()
@@ -101,9 +90,6 @@ async def get_user_record(param, client: Client = None) -> UserRegistration:
     :param client:  The bot object
     :return:        UserRegistration object if in DB, None otherwise
     """
-    # is_int = isinstance(param, int)
-    # is_str = isinstance(param, str)
-
     if not (isinstance(param, int) or isinstance(param, str)):
         return None
     else:
@@ -163,10 +149,9 @@ def remove_stale_users():
     latest_timestamp_unconfirmed = int(time.time()) - 5*60      # 5 minutes (5 min * 60 s)
     latest_timestamp_confirmed = int(time.time()) - 24*60*60    # 24 hours  (24 h * 60 min * 60 s)
 
-    # conn = sqlite3.connect(REGISTRATION_PATH)
     conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database='fcom')
-
     db = conn.cursor()
+
     cmd = """
     DELETE FROM 
         registration 
@@ -190,7 +175,6 @@ def remove_discord_user(discord_id: int) -> bool:
     if not user_exists(discord_id):
         return False
     else:
-        # conn = sqlite3.connect(REGISTRATION_PATH)
         conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database='fcom')
 
         db = conn.cursor()
@@ -207,11 +191,9 @@ def remove_discord_user(discord_id: int) -> bool:
 
 
 def insert_message(msg: FsdMessage):
-    # conn = sqlite3.connect(MESSAGES_PATH)
     conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database='fcom')
 
     db = conn.cursor()
-    # cmd = "INSERT INTO messages(insert_time, token, timestamp, sender, receiver, message) VALUES (?, ?, ?, ?, ?, ?)"
     cmd = """   INSERT INTO 
                     messages(token, time_received, sender, receiver, message) 
                 VALUES 
@@ -233,26 +215,9 @@ def get_messages() -> List[FsdMessage]:
                 and sorted by registration token, then by arrival order
                 (both in ascending order).
     """
-    # Old SQLite stuff
-    # conn = sqlite3.connect(MESSAGES_PATH)
-    # conn.isolation_level = None
 
     conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database='fcom')
     cursor = conn.cursor()
-
-    # Old SQLLite stuff
-    # cursor.execute("BEGIN IMMEDIATE TRANSACTION;")
-    # cursor.execute("""SELECT
-    #                       token,
-    #                       timestamp,
-    #                       sender,
-    #                       receiver,
-    #                       GROUP_CONCAT(message,'\n')
-    #                   FROM messages
-    #                   GROUP BY
-    #                       token, sender
-    #                   ORDER BY token ASC, id ASC;
-    #               """)
 
     # TODO: implement a discord_id field in FsdMessage so that we don't need to make a separate query
     # cursor.execute("""SELECT
@@ -310,8 +275,6 @@ def get_messages() -> List[FsdMessage]:
     message_list = []
 
     # Parse returned results into FsdMessage objects
-    # SQLite DB schema:
-    #   (id, insert_time, token, timestamp, sender, receiver, message)
     # MariaDB results schema:
     #   (MAX(id), discord_id, messages.token, time_received, sender, receiver, message)
     # FsdMessage:
@@ -330,6 +293,7 @@ def get_messages() -> List[FsdMessage]:
         combined_contents = msg[6]
 
         message_list.append(FsdMessage(token, timestamp, sender, receiver, combined_contents))
+
     return message_list
 
 
@@ -342,7 +306,6 @@ def is_beta_tester(discord_id: int) -> bool:
 
     :return:    True if a beta tester, False otherwise
     """
-    # conn = sqlite3.connect(TESTERS_PATH)
     conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database='fcom')
     db = conn.cursor()
 
@@ -363,8 +326,6 @@ def user_exists(discord_id: int) -> bool:
     :param discord_id:  Discord ID
     :return:            True if it exists, False otherwise
     """
-
-    # conn = sqlite3.connect(REGISTRATION_PATH)
     conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database='fcom')
     cursor = conn.cursor()
     cmd = "SELECT * FROM registration WHERE discord_id=%s;"
@@ -384,7 +345,6 @@ def get_user_record_tuple(param) -> ():
     Internal method for retrieving the user registration record from the DB.
     :return:
     """
-    # conn = sqlite3.connect(REGISTRATION_PATH)
     conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database='fcom')
 
     db = conn.cursor()
