@@ -37,7 +37,7 @@ def add_discord_user(discord_id: int, discord_name: str, channel_object: DMChann
     :return:                Token, if the user isn't already in the DB
     """
     # conn = sqlite3.connect(REGISTRATION_PATH)
-    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=TESTERS_DB)
+    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database='fcom')
 
     db = conn.cursor()
 
@@ -71,7 +71,7 @@ def confirm_discord_user(token: str, callsign: str) -> bool:
     :return:         True if success, False otherwise
     """
     # conn = sqlite3.connect(REGISTRATION_PATH)
-    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=REGISTRATION_DB)
+    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database='fcom')
 
     db = conn.cursor()
 
@@ -164,7 +164,7 @@ def remove_stale_users():
     latest_timestamp_confirmed = int(time.time()) - 24*60*60    # 24 hours  (24 h * 60 min * 60 s)
 
     # conn = sqlite3.connect(REGISTRATION_PATH)
-    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=REGISTRATION_DB)
+    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database='fcom')
 
     db = conn.cursor()
     cmd = """
@@ -191,7 +191,7 @@ def remove_discord_user(discord_id: int) -> bool:
         return False
     else:
         # conn = sqlite3.connect(REGISTRATION_PATH)
-        conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=REGISTRATION_DB)
+        conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database='fcom')
 
         db = conn.cursor()
         cmd = "DELETE FROM registration WHERE discord_id=%s"
@@ -208,7 +208,7 @@ def remove_discord_user(discord_id: int) -> bool:
 
 def insert_message(msg: FsdMessage):
     # conn = sqlite3.connect(MESSAGES_PATH)
-    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=MESSAGES_DB)
+    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database='fcom')
 
     db = conn.cursor()
     # cmd = "INSERT INTO messages(insert_time, token, timestamp, sender, receiver, message) VALUES (?, ?, ?, ?, ?, ?)"
@@ -237,7 +237,7 @@ def get_messages() -> List[FsdMessage]:
     # conn = sqlite3.connect(MESSAGES_PATH)
     # conn.isolation_level = None
 
-    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=MESSAGES_DB)
+    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database='fcom')
     cursor = conn.cursor()
 
     # Old SQLLite stuff
@@ -343,7 +343,7 @@ def is_beta_tester(discord_id: int) -> bool:
     :return:    True if a beta tester, False otherwise
     """
     # conn = sqlite3.connect(TESTERS_PATH)
-    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=TESTERS_DB)
+    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database='fcom')
     db = conn.cursor()
 
     cmd = "SELECT * FROM testers where discord_id=%s"
@@ -365,7 +365,7 @@ def user_exists(discord_id: int) -> bool:
     """
 
     # conn = sqlite3.connect(REGISTRATION_PATH)
-    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=REGISTRATION_DB)
+    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database='fcom')
     cursor = conn.cursor()
     cmd = "SELECT * FROM registration WHERE discord_id=%s;"
     cursor.execute(cmd,(discord_id,))
@@ -385,7 +385,7 @@ def get_user_record_tuple(param) -> ():
     :return:
     """
     # conn = sqlite3.connect(REGISTRATION_PATH)
-    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=REGISTRATION_DB)
+    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database='fcom')
 
     db = conn.cursor()
 
