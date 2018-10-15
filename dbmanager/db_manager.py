@@ -199,7 +199,7 @@ def insert_message(msg: FsdMessage):
                 VALUES 
                     (%s, FROM_UNIXTIME(%s), %s, %s, %s)
             """
-    db.execute(cmd, (int(time.time()), msg.token, msg.timestamp, msg.sender, msg.receiver, msg.message))
+    db.execute(cmd, (msg.token, msg.timestamp, msg.sender, msg.receiver, msg.message))
     conn.commit()
     conn.close()
 
@@ -247,8 +247,8 @@ def get_messages() -> List[FsdMessage]:
                                 receiver, 
                                 GROUP_CONCAT(message ORDER BY id SEPARATOR '\n') as message_contents
                             FROM messages
-                            --LEFT JOIN 
-                                --registration on messages.token = registration.token
+                            -- LEFT JOIN 
+                                -- registration on messages.token = registration.token
                             GROUP BY 
                                 token, sender
                             ORDER BY insert_time asc;
