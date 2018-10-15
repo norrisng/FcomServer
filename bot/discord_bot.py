@@ -75,8 +75,11 @@ async def on_message(message):
         status:     Shows the currently registered callsign (if any)
         remove:		De-registers the user from the internal DB.
     """
+    # Do not reply to self
+    if message.author.id == bot.user.id:
+        return
     # CLOSED BETA ONLY: check if user is an approved tester
-    if not db_manager.is_beta_tester(message.channel.recipient.id):
+    elif not db_manager.is_beta_tester(message.channel.recipient.id):
         await message.channel.send('You are not a tester!')
 
     # register
