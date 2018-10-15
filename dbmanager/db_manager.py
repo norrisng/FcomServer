@@ -260,7 +260,12 @@ def get_messages() -> List[FsdMessage]:
     # cursor.execute("SELECT MAX(id) FROM messages")
     # most_recent_id = cursor.fetchone()[0]
 
-    most_recent_id = messages[-1][0]
+    # Default case: no messages retrieved
+    if len(messages) == 0:
+        most_recent_id = 0
+    else:
+        most_recent_id = messages[-1][0]
+
 
     cmd = "DELETE FROM messages WHERE id <= %s;"
     cursor.execute(cmd, (most_recent_id,))
