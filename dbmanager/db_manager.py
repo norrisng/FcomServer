@@ -11,6 +11,7 @@ from typing import List
 DB_URI = 'localhost'
 DB_USERNAME = os.environ['FCOM_DB_USERNAME']
 DB_PASSWORD = os.environ['FCOM_DB_PASSWORD']
+DB_NAME = 'fcom'
 
 
 # This acts as a local cache for DMChannel objects.
@@ -27,7 +28,7 @@ def add_discord_user(discord_id: int, discord_name: str, channel_object: DMChann
     :param channel_object:  DMChannel object for the specified Discord user
     :return:                Token, if the user isn't already in the DB
     """
-    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database='fcom')
+    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=DB_NAME)
 
     db = conn.cursor()
 
@@ -60,7 +61,7 @@ def confirm_discord_user(token: str, callsign: str) -> bool:
     :param callsign: the callsign that the Discord user wants to register
     :return:         True if success, False otherwise
     """
-    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database='fcom')
+    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=DB_NAME)
 
     db = conn.cursor()
 
@@ -145,22 +146,17 @@ def remove_stale_users():
     """
     Remove unconfirmed users older than 5 minutes, and confirmed users registered for over 24 hours
     """
-    # calculate the unix time 5 minutes before the current time
-    latest_timestamp_unconfirmed = int(time.time()) - 5*60      # 5 minutes (5 min * 60 s)
-    latest_timestamp_confirmed = int(time.time()) - 24*60*60    # 24 hours  (24 h * 60 min * 60 s)
-
-    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database='fcom')
+    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=DB_NAME)
     db = conn.cursor()
 
-    cmd = """
-    DELETE FROM 
-        registration 
-    WHERE 
-        (is_verified IS false AND last_updated <= %s) OR
-        (is_verified IS true AND last_updated <= %s)
-    ;
-    """
-    db.execute(cmd, (latest_timestamp_confirmed, latest_timestamp_unconfirmed))
+    db.execute("""
+        DELETE FROM 
+            registration
+        WHERE 
+            (is_verified is TRUE and last_updated < DATE_SUB(now(), interval 24 hour)) OR
+            (is_verified is false and last_updated < DATE_SUB(now(), interval 5 minute))
+        ;
+    """)
     conn.commit()
     conn.close()
 
@@ -175,7 +171,7 @@ def remove_discord_user(discord_id: int) -> bool:
     if not user_exists(discord_id):
         return False
     else:
-        conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database='fcom')
+        conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=DB_NAME)
 
         db = conn.cursor()
         cmd = "DELETE FROM registration WHERE discord_id=%s"
@@ -191,7 +187,7 @@ def remove_discord_user(discord_id: int) -> bool:
 
 
 def insert_message(msg: FsdMessage):
-    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database='fcom')
+    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=DB_NAME)
 
     db = conn.cursor()
     cmd = """   INSERT INTO 
@@ -216,7 +212,7 @@ def get_messages() -> List[FsdMessage]:
                 (both in ascending order).
     """
 
-    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database='fcom')
+    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=DB_NAME)
     cursor = conn.cursor()
 
     # TODO: implement a discord_id field in FsdMessage so that we don't need to make a separate query
@@ -311,7 +307,7 @@ def is_beta_tester(discord_id: int) -> bool:
 
     :return:    True if a beta tester, False otherwise
     """
-    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database='fcom')
+    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=DB_NAME)
     db = conn.cursor()
 
     cmd = "SELECT * FROM testers where discord_id=%s"
@@ -331,7 +327,7 @@ def user_exists(discord_id: int) -> bool:
     :param discord_id:  Discord ID
     :return:            True if it exists, False otherwise
     """
-    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database='fcom')
+    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=DB_NAME)
     cursor = conn.cursor()
     cmd = "SELECT * FROM registration WHERE discord_id=%s;"
     cursor.execute(cmd,(discord_id,))
@@ -350,7 +346,7 @@ def get_user_record_tuple(param) -> ():
     Internal method for retrieving the user registration record from the DB.
     :return:
     """
-    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database='fcom')
+    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=DB_NAME)
 
     db = conn.cursor()
 
