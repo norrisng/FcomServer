@@ -24,6 +24,7 @@ The bot and the API (i.e. this repository) need to be run simultaneously.
 - Python 3.6+
 - discord.py (rewrite)
 - Flask
+- Gunicorn
 - mysql.connector
 
 The `requirements.txt` file also contains a number of dependencies, but these are the main ones required.
@@ -82,12 +83,18 @@ pip3 install -r requirements.txt
 pip3 install gunicorn
 ```
 
+Create a file named `bot_token.txt` inside the FcomServer folder (i.e. at the top level). It should contain your bot token.
+
 Then, run both the bot and the API. They must be run simultaneously.
+
 ```commandline
 python3 main_bot.py
 python3 main_api.py
 ```
+If you want to have both run in the background, you'll have to set them up as a service on your operating system.
+
 To get out of the virtual environment:
+
 ```commandline
 deactivate
 ```
