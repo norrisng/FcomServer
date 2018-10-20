@@ -78,9 +78,6 @@ async def on_message(message):
     # Do not reply to self
     if message.author.id == bot.user.id:
         return
-    # CLOSED BETA ONLY: check if user is an approved tester
-    elif not db_manager.is_beta_tester(message.channel.recipient.id):
-        await message.channel.send('You are not a tester!')
 
     # register
     elif message.content.lower() == 'register':
@@ -116,8 +113,8 @@ async def on_message(message):
 
         if bot_user_commands.remove_user(message.channel.recipient.id):
             msg = "Successfully deregistered! You'll no longer receive forwarded messages."
-            logging.info(f'Deregister Discord user {message.channel.recipient.id}'
-                         f'({message.channel.recipient.name}{message.channel.recipient.discriminator})')
+            logging.info(f'Deregister Discord user #{message.channel.recipient.id} '
+                         f'({message.channel.recipient.name}#{message.channel.recipient.discriminator})')
         else:
             msg = "Could not unregister. Are you sure you're registered?"
 

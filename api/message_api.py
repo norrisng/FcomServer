@@ -31,7 +31,7 @@ def register_user():
     callsign = request.args.get('callsign')
     token = request.args.get('token')
 
-    logging.info(f'Registration request from {request.remote_addr}: {callsign}, {token}')
+    logging.info(f'Registration request: {token}, {callsign}')
 
     if token is None:
         return jsonify(status=400, detail='Missing token'), 400
@@ -104,7 +104,8 @@ def post_message():
                                               'Alternatively, it may begin with an "@" and contain precisely 5 numerical digits'), \
                    400
 
-        logging.info(f'{request.remote_addr} - - {token}, {timestamp}, {sender} > {receiver}: "{message}"')
+        # logging.info(f'{request.remote_addr} - - {token}, {timestamp}, {sender} > {receiver}: "{message}"')
+        logging.info(f'Forwarded message received ({token}, {sender} > {receiver})')
 
         # Check token - if it's not associated with any Discord user, return an error
         discord_user = db_manager.get_user_registration(token)
