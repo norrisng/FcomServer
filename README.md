@@ -38,7 +38,7 @@ CREATE DATABASE fcom;
 
 #### Tables ####
 
-```mariadb
+```mysql
 CREATE TABLE messages ( 
 	id INTEGER PRIMARY KEY AUTO_INCREMENT,
 	insert_time timestamp NOT NULL, 
@@ -50,7 +50,7 @@ CREATE TABLE messages (
 );
 ```
 
-```mariadb
+```mysql
 CREATE TABLE registration ( 
 	last_updated timestamp,
 	token varchar(43), 
