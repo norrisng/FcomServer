@@ -3,6 +3,7 @@ from dbmodels.fsd_message import FsdMessage
 from dbmanager import db_manager
 import sqlite3
 import logging
+import re
 
 
 app = Flask(__name__)
@@ -11,6 +12,11 @@ logging.basicConfig(filename='api.log', level=logging.INFO, format='%(asctime)s:
 
 @app.route('/api/v1/test', methods=['GET'])
 def test():
+    """
+    Simple test endpoint for checking if the API is working.
+
+    :return: "Success"
+    """
     return "Success"
 
 
@@ -18,12 +24,14 @@ def test():
 def register_user():
     """
     Marks the user as registered in the registration DB, and returns info on the Discord user.
-    :return:
+
+    :return: JSON object containing the token, Discord ID, Discord name, and callsign.
+            If the token doesn't exist, an error is returned.
     """
     callsign = request.args.get('callsign')
     token = request.args.get('token')
 
-    logging.info(f'Registration request from {request.remote_addr}: {callsign}, {token}')
+    logging.info(f'Registration request: {token}, {callsign}')
 
     if token is None:
         return jsonify(status=400, detail='Missing token'), 400
@@ -47,6 +55,11 @@ def register_user():
 
 @app.route('/api/v1/messaging', methods=['POST'])
 def post_message():
+    """
+    Forwards a message to a Discord user.
+
+    :return: 'ok' on success. A 400 error with details is returned if the request is in the incorrect format.
+    """
     if request.content_type != 'application/json':
         return jsonify(status=400, detail='Only JSON is supported at this time.'), 400
 
@@ -59,14 +72,42 @@ def post_message():
         # TODO: support parsing of multiple messages per POST request
         message = payload['messages'][0]
 
-        timestamp = message['timestamp']
-        sender = message['sender']
-        receiver = message['receiver']
+        timestamp_raw = message['timestamp']
+        sender_raw = message['sender']
+        receiver_raw = message['receiver']
         message = message['message']
 
-        logging.info(f'{request.remote_addr} - - {token}, {timestamp}, {sender} > {receiver}: "{message}"')
+        # Check timestamp
+        try:
+            timestamp = int(timestamp_raw)
+        except ValueError:
+            return jsonify(status=400, detail='Timestamp must be an integer.'), 400
 
-        # Abort if token not associated with any Discord user
+        # Check sender
+        sender_regex = '(\w|\d|_|-)+'
+
+        if re.match(sender_regex, sender_raw, re.ASCII):
+            sender = sender_raw
+        else:
+            return jsonify(status=400, detail='Sender field must be 20 characters or less,'
+                                              'and can only contain letters, numbers, dashes, and underscores.'), \
+                   400
+
+        # Check receiver (we also have to accept frequencies; e.g. @22800)
+        receiver_regex = '(@\d{5})|(\w|\d|_|-)+'
+
+        if re.match(receiver_regex, receiver_raw, re.ASCII):
+            receiver = receiver_raw
+        else:
+            return jsonify(status=400, detail='Receiver field must be 20 characters or less,'
+                                              'and can only contain letters, numbers, dashes, and underscores.'
+                                              'Alternatively, it may begin with an "@" and contain precisely 5 numerical digits'), \
+                   400
+
+        # logging.info(f'{request.remote_addr} - - {token}, {timestamp}, {sender} > {receiver}: "{message}"')
+        logging.info(f'Forwarded message received ({token}, {sender} > {receiver})')
+
+        # Check token - if it's not associated with any Discord user, return an error
         discord_user = db_manager.get_user_registration(token)
         if discord_user is None:
             logging.info(f'{request.remote_addr} - - token "{token}" not found!')
