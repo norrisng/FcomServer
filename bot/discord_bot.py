@@ -78,9 +78,6 @@ async def on_message(message):
     # Do not reply to self
     if message.author.id == bot.user.id:
         return
-    # CLOSED BETA ONLY: check if user is an approved tester
-    elif not db_manager.is_beta_tester(message.channel.recipient.id):
-        await message.channel.send('You are not a tester!')
 
     # register
     elif message.content.lower() == 'register':
