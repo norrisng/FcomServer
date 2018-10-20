@@ -113,8 +113,8 @@ async def on_message(message):
 
         if bot_user_commands.remove_user(message.channel.recipient.id):
             msg = "Successfully deregistered! You'll no longer receive forwarded messages."
-            logging.info(f'Deregister Discord user {message.channel.recipient.id}'
-                         f'({message.channel.recipient.name}{message.channel.recipient.discriminator})')
+            logging.info(f'Deregister Discord user #{message.channel.recipient.id} '
+                         f'({message.channel.recipient.name}#{message.channel.recipient.discriminator})')
         else:
             msg = "Could not unregister. Are you sure you're registered?"
 
