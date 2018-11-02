@@ -97,11 +97,17 @@ def post_message():
         receiver_regex = '(@\d{5})|(\w|\d|_|-)+'
 
         if re.match(receiver_regex, receiver_raw, re.ASCII):
-            receiver = receiver_raw
+
+            # Parse @xxyyy into 1xx.yyy MHz
+            if receiver_raw.startswith('@') and len(receiver_raw) == 6:
+                receiver = f'{receiver_raw[:3]}.{receiver_raw[3:]} MHz'
+            else:
+                receiver = receiver_raw
         else:
             return jsonify(status=400, detail='Receiver field must be 20 characters or less,'
                                               'and can only contain letters, numbers, dashes, and underscores.'
-                                              'Alternatively, it may begin with an "@" and contain precisely 5 numerical digits'), \
+                                              'Alternatively, if it is a frequency message, it may begin with an '
+                                              '"@" and contain precisely 5 numerical digits.'), \
                    400
 
         # logging.info(f'{request.remote_addr} - - {token}, {timestamp}, {sender} > {receiver}: "{message}"')
