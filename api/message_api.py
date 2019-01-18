@@ -44,7 +44,7 @@ def register_user():
         if requested_user is None:
             return jsonify(status=400, detail="Provided token is not registered to any Discord user"), 400
         else:
-            db_manager.confirm_discord_user(token, callsign)
+            db_manager.confirm_discord_user(token, callsign.upper())
 
             discord_id = requested_user.discord_id
             discord_name = requested_user.discord_name
