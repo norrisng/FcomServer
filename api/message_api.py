@@ -31,7 +31,7 @@ def register_user():
     callsign = request.args.get('callsign')
     token = request.args.get('token')
 
-    logging.info(f'Registration request: {token}, {callsign}')
+    logging.info(f'Registration request:\t\t{token} ({callsign})')
 
     if token is None:
         return jsonify(status=400, detail='Missing token'), 400
@@ -111,12 +111,12 @@ def post_message():
                    400
 
         # logging.info(f'{request.remote_addr} - - {token}, {timestamp}, {sender} > {receiver}: "{message}"')
-        logging.info(f'Forwarded message received ({token}, {sender} > {receiver})')
+        logging.info(f'Forwarded message received:\t{token}, {sender} > {receiver}')
 
         # Check token - if it's not associated with any Discord user, return an error
         discord_user = db_manager.get_user_registration(token)
         if discord_user is None:
-            logging.info(f'{request.remote_addr} - - token "{token}" not found!')
+            logging.info(f'Token not found:\t\t\t({token})')
             return jsonify(status=400, detail="Provided token isn't registered!"), 400
 
         # full_pm = FsdMessage(sender, receiver, timestamp, message)
