@@ -14,7 +14,7 @@ def register_user(user_channel: DMChannel) -> str:
     :return:                The token associated with the Discord user.
     """
     user = user_channel.recipient
-    token = db_manager.add_discord_user(user.id, f'{user.name}#{user.discriminator}', user_channel)
+    token = db_manager.add_discord_user(user.id, f'{user.name} #{user.discriminator}', user_channel)
     return token
 
 
