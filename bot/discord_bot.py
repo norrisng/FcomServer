@@ -65,7 +65,7 @@ async def prune_registrations():
 
 @bot.event
 async def on_ready():
-    logging.info(f'Now logged in as {bot.user.name} (#{bot.user.id})')
+    logging.info(f'Now logged in as {bot.user.name} ({bot.user.id})')
 
 
 @bot.event
@@ -93,8 +93,8 @@ async def on_message(message):
             msg = f"Here's your verification code: ```{fcom_api_token}```" +\
                     "Please enter it into the client within the next 5 minutes.\n"
             logging.info(
-                f'Generate token for user {message.channel.recipient.id} '
-                f'({message.channel.recipient.name}#{message.channel.recipient.discriminator}): {fcom_api_token}')
+                f'Generate token: \t{fcom_api_token}, {message.channel.recipient.id} '
+                f'({message.channel.recipient.name} #{message.channel.recipient.discriminator}) ')
         await message.channel.send(msg)
 
     # status
@@ -116,8 +116,8 @@ async def on_message(message):
 
         if bot_user_commands.remove_user(message.channel.recipient.id):
             msg = "Successfully deregistered! You'll no longer receive forwarded messages."
-            logging.info(f'Deregister Discord user #{message.channel.recipient.id} '
-                         f'({message.channel.recipient.name}#{message.channel.recipient.discriminator})')
+            logging.info(f'Deregister user:\t{message.channel.recipient.id} '
+                         f'({message.channel.recipient.name} #{message.channel.recipient.discriminator})')
         else:
             msg = "Could not unregister. Are you sure you're registered?"
 
