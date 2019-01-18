@@ -1,4 +1,7 @@
 from discord.ext import commands
+from discord import errors as discordpy_error
+from aiohttp import ClientError
+from websockets import exceptions as websocket_error
 from bot import bot_user_commands
 from dbmanager import db_manager
 import asyncio
@@ -62,7 +65,7 @@ async def prune_registrations():
 
 @bot.event
 async def on_ready():
-    logging.info(f'Now logged in as {bot.user.name} (#{bot.user.id})')
+    logging.info(f'Now logged in as {bot.user.name} ({bot.user.id})')
 
 
 @bot.event
@@ -90,8 +93,8 @@ async def on_message(message):
             msg = f"Here's your verification code: ```{fcom_api_token}```" +\
                     "Please enter it into the client within the next 5 minutes.\n"
             logging.info(
-                f'Generate token for user {message.channel.recipient.id} '
-                f'({message.channel.recipient.name}#{message.channel.recipient.discriminator}): {fcom_api_token}')
+                f'Generate token: \t{fcom_api_token}, {message.channel.recipient.id} '
+                f'({message.channel.recipient.name} #{message.channel.recipient.discriminator}) ')
         await message.channel.send(msg)
 
     # status
@@ -113,8 +116,8 @@ async def on_message(message):
 
         if bot_user_commands.remove_user(message.channel.recipient.id):
             msg = "Successfully deregistered! You'll no longer receive forwarded messages."
-            logging.info(f'Deregister Discord user #{message.channel.recipient.id} '
-                         f'({message.channel.recipient.name}#{message.channel.recipient.discriminator})')
+            logging.info(f'Deregister user:\t{message.channel.recipient.id} '
+                         f'({message.channel.recipient.name} #{message.channel.recipient.discriminator})')
         else:
             msg = "Could not unregister. Are you sure you're registered?"
 
@@ -128,7 +131,46 @@ def start_bot():
     """
     bot.loop.create_task(forward_messages())
     bot.loop.create_task(prune_registrations())
-    bot.run(token)
+
+    retry = True
+
+    # Based on https://gist.github.com/Hornwitser/93aceb86533ed3538b6f
+    while retry:
+
+        # Linearly increasing backoff for Discord server errors.
+        wait_interval = 0
+        max_wait_interval = 5 * 60      # 5-minute max interval between retries
+
+        try:
+            bot.run(token)
+
+        except (discordpy_error.HTTPException) as e:
+            logging.error("Couldn't login (discord.errors.HTTPException)")
+            logging.error(f'{e.message}')
+
+            if wait_interval < max_wait_interval:
+                wait_interval = wait_interval + 5
+            asyncio.sleep(wait_interval)
+
+        except (ClientError) as e:
+            logging.error("Couldn't login (discord.errors.ClientError)")
+            logging.error(f'{e.message}')
+
+            if wait_interval < max_wait_interval:
+                wait_interval = wait_interval + 5
+            asyncio.sleep(wait_interval)
+
+        except (websocket_error.ConnectionClosed) as e:
+            logging.info(f'{e.message}')
+
+            # Don't reconnect on authentication failure
+            if e.code == 4004:
+                logging.error("Authentication error!")
+                retry = False
+                raise
+
+        else:
+            break
 
 
 start_bot()
