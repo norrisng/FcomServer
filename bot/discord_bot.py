@@ -1,4 +1,7 @@
 from discord.ext import commands
+from discord import errors as discordpy_error
+from aiohttp import ClientError
+from websockets import exceptions as websocket_error
 from bot import bot_user_commands
 from dbmanager import db_manager
 import asyncio
@@ -128,7 +131,46 @@ def start_bot():
     """
     bot.loop.create_task(forward_messages())
     bot.loop.create_task(prune_registrations())
-    bot.run(token)
+
+    retry = True
+
+    # Based on https://gist.github.com/Hornwitser/93aceb86533ed3538b6f
+    while retry:
+
+        # Linearly increasing backoff for Discord server errors.
+        wait_interval = 0
+        max_wait_interval = 5 * 60      # 5-minute max interval between retries
+
+        try:
+            bot.run(token)
+
+        except (discordpy_error.HTTPException) as e:
+            logging.error("Couldn't login (discord.errors.HTTPException)")
+            logging.error(f'{e.message}')
+
+            if wait_interval < max_wait_interval:
+                wait_interval = wait_interval + 5
+            asyncio.sleep(wait_interval)
+
+        except (ClientError) as e:
+            logging.error("Couldn't login (discord.errors.ClientError)")
+            logging.error(f'{e.message}')
+
+            if wait_interval < max_wait_interval:
+                wait_interval = wait_interval + 5
+            asyncio.sleep(wait_interval)
+
+        except (websocket_error.ConnectionClosed) as e:
+            logging.info(f'{e.message}')
+
+            # Don't reconnect on authentication failure
+            if e.code == 4004:
+                logging.error("Authentication error!")
+                retry = False
+                raise
+
+        else:
+            break
 
 
 start_bot()
