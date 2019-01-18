@@ -43,6 +43,27 @@ def add_discord_user(discord_id: int, discord_name: str, channel_object: DMChann
     else:
         token = secrets.token_urlsafe(32)
 
+        # NOTE: 32 bytes = 43 characters
+        token_length = 43
+
+        # Replace all instances of the following with alphanumerics: _ - ~
+        token = token.replace('_','')
+        token = token.replace('-', '')
+
+        # How many characters to regenerate?
+        num_replacements = token_length - len(token)
+
+        # Having these characters in here ensures that the subsequent loop runs at least once
+        replacements = '_-'
+
+        # Keep re-generating until there aren't any "_" or "-" 's
+        while '_' in replacements or '-' in replacements:
+            replacements = secrets.token_urlsafe(num_replacements)
+
+        # token_urlsafe(n) produces a string of length n or higher (because n is in bytes),
+        # so lop off any extra characters as necessary
+        token = (token + replacements)[0:token_length]
+
         cmd = "INSERT INTO registration(token, discord_id, discord_name, is_verified) VALUES (%s,%s,%s,0)"
         db.execute(cmd, (token, discord_id, discord_name))
         conn.commit()
