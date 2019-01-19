@@ -30,6 +30,7 @@ def register_user():
     """
     callsign = request.args.get('callsign')
     token = request.args.get('token')
+    user_agent = request.user_agent.string
 
     logging.info(f'Registration request:\t\t{token} ({callsign})')
 

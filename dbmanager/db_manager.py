@@ -74,13 +74,14 @@ def add_discord_user(discord_id: int, discord_name: str, channel_object: DMChann
         return token
 
 
-def confirm_discord_user(token: str, callsign: str) -> bool:
+def confirm_discord_user(token: str, callsign: str, user_agent: str=None) -> bool:
     """
     Marks the specified token as confirmed, and saves the callsign to the Discord user.
 
-    :param token:    the token associated with a given user
-    :param callsign: the callsign that the Discord user wants to register
-    :return:         True if success, False otherwise
+    :param token:       the token associated with a given user
+    :param callsign:    the callsign that the Discord user wants to register
+    :param user_agent:  the user agent of the client (i.e. FcomClient)
+    :return:            True if success, False otherwise
     """
     conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=DB_NAME)
 
@@ -282,7 +283,6 @@ def get_messages() -> List[FsdMessage]:
         most_recent_id = 0
     else:
         most_recent_id = messages[-1][0]
-
 
     cmd = "DELETE FROM messages WHERE id <= %s;"
     cursor.execute(cmd, (most_recent_id,))
