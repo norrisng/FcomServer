@@ -10,14 +10,15 @@ Although the bot appears to users as a single, cohesive entity, it actually cons
 
 * A client-facing Flask API
     * Accepts forwarded messages
-    * Provides clients with the Discord username (and Snowflake ID) associated with a given registration token  
+    * Allows clients to "confirm" a registration token and provide a callsign
+        * The API responds with the Discord username (and Snowflake ID) associated with the given token
 * A Discord bot
     * Sends the forwarded messages to the associated Discord user
 * A relational database (specifically, MariaDB)
     * This acts as the link between the two
     * It also stores the mappings between Discord users and FCOM clients
 
-The bot and the API (i.e. this repository) need to be run simultaneously.
+The bot and the API need to be run simultaneously.
 
 ## Requirements
 
@@ -32,6 +33,8 @@ The `requirements.txt` file also contains a number of dependencies, but these ar
 ## Server setup
 
 ### Database ###
+
+#### Initial setup ####
 
 ```mysql
 CREATE DATABASE fcom;
@@ -60,7 +63,7 @@ pip3 install -r requirements.txt
 pip3 install gunicorn
 ```
 
-Create a file named `bot_token.txt` inside the FcomServer folder (i.e. at the top level). It should contain your bot token.
+Create a file named `bot_token.txt` inside the FcomServer folder (i.e. at the top level). It should contain your bot token, and nothing else.
 
 Then, run both the bot and the API. They must be run simultaneously.
 
@@ -69,6 +72,9 @@ python3 main_bot.py
 python3 main_api.py
 ```
 If you want to have both run in the background, you'll have to set them up as a service on your operating system.
+
+As is the case with any Flask API, please use a production server to serve the FCOM API.
+My implementation uses `gunicorn`, but you can use anything, really.
 
 To get out of the virtual environment:
 
