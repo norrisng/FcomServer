@@ -35,40 +35,17 @@ The `requirements.txt` file also contains a number of dependencies, but these ar
 
 ```mysql
 CREATE DATABASE fcom;
+CREATE USER '<username>'@'localhost' identified by '<password>';
 ```
+
+Create the following environment variables for the login:
+* Username: `FCOM_DB_USERNAME`
+* Password: `FCOM_DB_PASSWORD`
 
 #### Tables ####
 
-```mysql
-CREATE TABLE messages ( 
-	id INTEGER PRIMARY KEY AUTO_INCREMENT,
-	insert_time timestamp NOT NULL, 
-	token varchar(43) NOT NULL, 
-	time_received timestamp NOT NULL,
-	sender varchar(20) NOT NULL, 
-	receiver varchar(20) NOT NULL, 
-	message TEXT 
-);
-```
+See included `schema.sql` file.
 
-```mysql
-CREATE TABLE registration ( 
-	last_updated timestamp,
-	token varchar(43), 
-	discord_id bigint(20) UNIQUE, 
-	discord_name varchar(32), 
-	is_verified boolean, 
-	callsign varchar(20), 
-	PRIMARY KEY(token, discord_id) 
-);
-```
-
-(Yes, you'll have to do this manually for now. Seriously, just use my own bot!)
-
-Of course, you'll also have to create a user in the DB. The username and password for it should be stored in the following environment variables:
-
-* Username: `FCOM_DB_USERNAME`
-* Password: `FCOM_DB_PASSWORD`
 
 ### Bot and API ###
 
