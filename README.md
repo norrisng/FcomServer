@@ -67,7 +67,7 @@ Create a file named `bot_token.txt` inside the FcomServer folder (i.e. at the to
 
 Then, run both the bot and the API. They must be run simultaneously.
 
-```commandline
+```bash
 python3 main_bot.py
 python3 main_api.py
 ```
@@ -78,7 +78,7 @@ My implementation uses `gunicorn`, but you can use anything, really.
 
 To get out of the virtual environment:
 
-```commandline
+```bash
 deactivate
 ```
 
