@@ -78,3 +78,16 @@ deactivate
 
 
 
+#### User registration expiry ####
+
+As of the time of writing, due to difficulties in getting the bot to clean up old registrations, this feature is implemented via a cronjob that runs every 5 minutes.
+
+Implement the following SQL command via any tool of your choice, as long as it can be executed via `cron`:
+
+```mysql
+DELETE FROM registration
+WHERE  ( is_verified IS TRUE
+         AND last_updated < Date_sub(Now(), INTERVAL 24 hour) )
+        OR ( is_verified IS FALSE
+             AND last_updated < Date_sub(Now(), INTERVAL 5 minute) );
+```
