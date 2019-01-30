@@ -319,6 +319,21 @@ def get_messages() -> List[FsdMessage]:
     return message_list
 
 
+def get_num_users() -> int:
+    """
+    Gets the numbers of users currently registered on FCOM
+    :return: number of users in the registration table
+    """
+    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=DB_NAME)
+
+    db = conn.cursor()
+    db.execute("SELECT count(*) FROM registration;")
+    num_users = db.fetchone()[0]
+
+    conn.close()
+    return num_users
+
+
 def is_beta_tester(discord_id: int) -> bool:
     """
     (CLOSED BETA ONLY) Determines if a Discord user is part of the closed beta.

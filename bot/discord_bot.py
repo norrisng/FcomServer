@@ -1,5 +1,5 @@
 from discord.ext import commands
-from discord import errors as discordpy_error
+from discord import errors as discordpy_error, Game, Status
 from aiohttp import ClientError
 from websockets import exceptions as websocket_error
 from bot import bot_user_commands
@@ -51,6 +51,22 @@ async def forward_messages():
                     logging.info(f'Token {msg.token} is not registered!')
 
         await asyncio.sleep(3)
+
+
+async def update_status():
+    """
+    Updates the bot's status, which contains the number of FCOM-registered users.
+    Updates every 30s.
+    """
+    await bot.wait_until_ready()
+
+    while not bot.is_closed():
+        num_users = db_manager.get_num_users()
+        status_string = f'with messages for {num_users} users'
+
+        bot.change_presence(status=Status.idle, activity=Game(status_string))
+
+        await asyncio.sleep(30)
 
 
 async def prune_registrations():
@@ -131,6 +147,7 @@ def start_bot():
     """
     bot.loop.create_task(forward_messages())
     bot.loop.create_task(prune_registrations())
+    bot.loop.create_task(update_status())
 
     retry = True
 
