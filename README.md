@@ -10,14 +10,15 @@ Although the bot appears to users as a single, cohesive entity, it actually cons
 
 * A client-facing Flask API
     * Accepts forwarded messages
-    * Provides clients with the Discord username (and Snowflake ID) associated with a given registration token  
+    * Allows clients to "confirm" a registration token and provide a callsign
+        * The API responds with the Discord username (and Snowflake ID) associated with the given token
 * A Discord bot
     * Sends the forwarded messages to the associated Discord user
 * A relational database (specifically, MariaDB)
     * This acts as the link between the two
     * It also stores the mappings between Discord users and FCOM clients
 
-The bot and the API (i.e. this repository) need to be run simultaneously.
+The bot and the API need to be run simultaneously.
 
 ## Requirements
 
@@ -33,42 +34,21 @@ The `requirements.txt` file also contains a number of dependencies, but these ar
 
 ### Database ###
 
+#### Initial setup ####
+
 ```mysql
 CREATE DATABASE fcom;
+CREATE USER '<username>'@'localhost' identified by '<password>';
 ```
+
+Create the following environment variables for the login:
+* Username: `FCOM_DB_USERNAME`
+* Password: `FCOM_DB_PASSWORD`
 
 #### Tables ####
 
-```mysql
-CREATE TABLE messages ( 
-	id INTEGER PRIMARY KEY AUTO_INCREMENT,
-	insert_time timestamp NOT NULL, 
-	token varchar(43) NOT NULL, 
-	time_received timestamp NOT NULL,
-	sender varchar(20) NOT NULL, 
-	receiver varchar(20) NOT NULL, 
-	message TEXT 
-);
-```
+See included `schema.sql` file.
 
-```mysql
-CREATE TABLE registration ( 
-	last_updated timestamp,
-	token varchar(43), 
-	discord_id bigint(20) UNIQUE, 
-	discord_name varchar(32), 
-	is_verified boolean, 
-	callsign varchar(20), 
-	PRIMARY KEY(token, discord_id) 
-);
-```
-
-(Yes, you'll have to do this manually for now. Seriously, just use my own bot!)
-
-Of course, you'll also have to create a user in the DB. The username and password for it should be stored in the following environment variables:
-
-* Username: `FCOM_DB_USERNAME`
-* Password: `FCOM_DB_PASSWORD`
 
 ### Bot and API ###
 
@@ -83,21 +63,37 @@ pip3 install -r requirements.txt
 pip3 install gunicorn
 ```
 
-Create a file named `bot_token.txt` inside the FcomServer folder (i.e. at the top level). It should contain your bot token.
+Create a file named `bot_token.txt` inside the FcomServer folder (i.e. at the top level). It should contain your bot token, and nothing else.
 
 Then, run both the bot and the API. They must be run simultaneously.
 
-```commandline
+```bash
 python3 main_bot.py
 python3 main_api.py
 ```
 If you want to have both run in the background, you'll have to set them up as a service on your operating system.
 
+As is the case with any Flask API, please use a production server to serve the FCOM API.
+My implementation uses `gunicorn`, but you can use anything, really.
+
 To get out of the virtual environment:
 
-```commandline
+```bash
 deactivate
 ```
 
 
 
+#### User registration expiry ####
+
+As of the time of writing, due to difficulties in getting the bot to clean up old registrations, this feature is implemented via a cronjob that runs every 5 minutes.
+
+Implement the following SQL command via any tool of your choice, as long as it can be executed via `cron`:
+
+```mysql
+DELETE FROM registration
+WHERE  ( is_verified IS TRUE
+         AND last_updated < Date_sub(Now(), INTERVAL 24 hour) )
+        OR ( is_verified IS FALSE
+             AND last_updated < Date_sub(Now(), INTERVAL 5 minute) );
+```
