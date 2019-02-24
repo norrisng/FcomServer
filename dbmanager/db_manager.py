@@ -32,7 +32,8 @@ def add_discord_user(discord_id: int, discord_name: str, channel_object: DMChann
     db = conn.cursor()
 
     # First, check if the user is already registered
-    cmd = "SELECT * FROM registration where discord_id=%s"
+    # TODO: replace this query with a SELECT COUNT(*) for optimization
+    cmd = "SELECT token FROM registration where discord_id=%s"
     db.execute(cmd, (discord_id,))
     user = db.fetchone()
 
@@ -86,7 +87,8 @@ def confirm_discord_user(token: str, callsign: str) -> bool:
     db = conn.cursor()
 
     # First, check if the token exists
-    cmd = "SELECT * FROM registration WHERE token=%s"
+    # TODO: replace this query with a SELECT COUNT(*) for optimization
+    cmd = "SELECT discord_id FROM registration WHERE token=%s"
     db.execute(cmd, (token,))
     user = db.fetchone()
 
@@ -340,7 +342,8 @@ def user_exists(discord_id: int) -> bool:
     """
     conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=DB_NAME)
     cursor = conn.cursor()
-    cmd = "SELECT * FROM registration WHERE discord_id=%s;"
+    # TODO: replace this query with a SELECT COUNT(*) for optimization
+    cmd = "SELECT token FROM registration WHERE discord_id=%s;"
     cursor.execute(cmd,(discord_id,))
     user = cursor.fetchone()
 
