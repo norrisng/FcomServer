@@ -120,7 +120,6 @@ async def get_user_record(param, client: Client = None) -> UserRegistration:
         if result is None:
             return None
         else:
-            # user = UserRegistration()
             last_updated = result[0]
             token = result[1]
             discord_id = result[2]
@@ -273,22 +272,14 @@ def get_messages() -> List[FsdMessage]:
 
     messages = cursor.fetchall()
 
-    # Old SQLite stuff
-    # cursor.execute("SELECT MAX(id) FROM messages")
-    # most_recent_id = cursor.fetchone()[0]
-
     # Default case: no messages retrieved
     if len(messages) == 0:
         most_recent_id = 0
     else:
         most_recent_id = messages[-1][0]
 
-
     cmd = "DELETE FROM messages WHERE id <= %s;"
     cursor.execute(cmd, (most_recent_id,))
-
-    # Old SQLite stuff
-    # cursor.execute("COMMIT;")
 
     conn.commit()
     conn.close()
@@ -408,9 +399,5 @@ async def get_channel(client: Client, discord_id: int) -> DMChannel:
         # Save to internal dictionary
         pm_channels[discord_id] = ch
         channel = ch
-
-        # channel = client.get_channel(channel_id)
-        # channel = client.get_all_channels()
-        # pm_channels[channel_id] = channel
 
     return channel
