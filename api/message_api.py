@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify
 from dbmodels.fsd_message import FsdMessage
 from dbmanager import db_manager
-import sqlite3
 import logging
 import re
 from datetime import datetime, timedelta
@@ -136,13 +135,3 @@ def post_message():
                         'Each message object should include a timestamp, sender, receiver, and message (contents).')
         return jsonify(status=400, detail=error_detail), 400
 
-
-# Currently unused
-def log_request(receive_time, timestamp, sender, receiver, message):
-
-    conn = sqlite3.connect('../request_log.db')
-    db = conn.cursor()
-    cmd = "INSERT INTO messages VALUES (?, ?, ?, ?, ?)"
-
-    db.excecute(cmd, receive_time)
-    conn.close()
