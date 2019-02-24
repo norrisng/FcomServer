@@ -4,6 +4,7 @@ from dbmanager import db_manager
 import sqlite3
 import logging
 import re
+from datetime import datetime, timedelta
 
 
 app = Flask(__name__)
@@ -28,7 +29,7 @@ def register_user():
     :return: JSON object containing the token, Discord ID, Discord name, and callsign.
             If the token doesn't exist, an error is returned.
     """
-    callsign = request.args.get('callsign')
+    callsign = request.args.get('callsign').upper()
     token = request.args.get('token')
 
     logging.info(f'Registration request:\t\t{token} ({callsign})')
@@ -45,6 +46,15 @@ def register_user():
             return jsonify(status=400, detail="Provided token is not registered to any Discord user"), 400
         else:
             db_manager.confirm_discord_user(token, callsign.upper())
+
+            # last_updated_time =
+            expiry_time = requested_user.last_updated + timedelta(1)
+
+            curr_time = round(datetime.utcnow().timestamp())
+            message = f"You've registered with the callsign **{callsign}**. " +\
+                      "Don't forget to type `remove` here to fully deregister!\n" +\
+                      f"Your registration will expire at **{str(expiry_time)[:16]} (UTC)**."
+            db_manager.insert_message(FsdMessage(token, curr_time, '[Registration]', callsign, message))
 
             discord_id = requested_user.discord_id
             discord_name = requested_user.discord_name

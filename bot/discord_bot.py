@@ -90,8 +90,8 @@ async def on_message(message):
         if fcom_api_token is None:
             msg = "You're already registered! To reset your registration, type `remove` before typing `register` again."
         else:
-            msg = f"Here's your verification code: ```{fcom_api_token}```" +\
-                    "Please enter it into the client within the next 5 minutes.\n"
+            msg = f"Here's your Discord code: ```{fcom_api_token}```" +\
+                    "\nPlease enter it into the client within the next 5 minutes.\n"
             logging.info(
                 f'Generate token:\t\t{fcom_api_token}, {message.channel.recipient.id} '
                 f'({message.channel.recipient.name} #{message.channel.recipient.discriminator}) ')
@@ -105,9 +105,11 @@ async def on_message(message):
         if user is None:
             msg = "You're currently not registered."
         elif not user.is_verified:
-            msg = f"You're registered, but you haven't logged in via the client yet.\n(token:`{user.token}`)"
+            msg = f"You're registered, but you haven't logged in via the client yet.\n" +\
+                f"**Discord code:** `{user.token}`"
         else:
-            msg = f"You're registered! The callsign you're using is **{user.callsign}**.\n(**token:** `{user.token}`)"
+            msg = f"You're registered! The callsign you're using is **{user.callsign}**.\n" +\
+                  f"**Discord code:** `{user.token}`"
 
         await message.channel.send(msg)
 
