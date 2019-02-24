@@ -47,7 +47,6 @@ def register_user():
         else:
             db_manager.confirm_discord_user(token, callsign.upper())
 
-            # last_updated_time =
             expiry_time = requested_user.last_updated + timedelta(1)
 
             curr_time = round(datetime.utcnow().timestamp())
@@ -120,7 +119,6 @@ def post_message():
                                               '"@" and contain precisely 5 numerical digits.'), \
                    400
 
-        # logging.info(f'{request.remote_addr} - - {token}, {timestamp}, {sender} > {receiver}: "{message}"')
         logging.info(f'Forwarded message received:\t{token}, {sender} > {receiver}')
 
         # Check token - if it's not associated with any Discord user, return an error
@@ -129,10 +127,8 @@ def post_message():
             logging.info(f'Token not found:\t\t\t({token})')
             return jsonify(status=400, detail="Provided token isn't registered!"), 400
 
-        # full_pm = FsdMessage(sender, receiver, timestamp, message)
         db_manager.insert_message(FsdMessage(token, timestamp, sender, receiver, message))
 
-        # return jsonify({'message': message}), 201
         return 'ok'
 
     except KeyError:
