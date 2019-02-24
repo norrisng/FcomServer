@@ -1,7 +1,6 @@
 import mysql.connector as mariadb
 import secrets
 import os
-import time
 from dbmodels.user_registration import UserRegistration
 from dbmodels.fsd_message import FsdMessage
 from discord import DMChannel, Client
@@ -33,7 +32,8 @@ def add_discord_user(discord_id: int, discord_name: str, channel_object: DMChann
     db = conn.cursor()
 
     # First, check if the user is already registered
-    cmd = "SELECT * FROM registration where discord_id=%s"
+    # TODO: replace this query with a SELECT COUNT(*) for optimization
+    cmd = "SELECT token FROM registration where discord_id=%s"
     db.execute(cmd, (discord_id,))
     user = db.fetchone()
 
@@ -42,6 +42,27 @@ def add_discord_user(discord_id: int, discord_name: str, channel_object: DMChann
         return None
     else:
         token = secrets.token_urlsafe(32)
+
+        # NOTE: 32 bytes = 43 characters
+        token_length = 43
+
+        # Replace all instances of the following with alphanumerics: _ - ~
+        token = token.replace('_','')
+        token = token.replace('-', '')
+
+        # How many characters to regenerate?
+        num_replacements = token_length - len(token)
+
+        # Having these characters in here ensures that the subsequent loop runs at least once
+        replacements = '_-'
+
+        # Keep re-generating until there aren't any "_" or "-" 's
+        while '_' in replacements or '-' in replacements:
+            replacements = secrets.token_urlsafe(num_replacements)
+
+        # token_urlsafe(n) produces a string of length n or higher (because n is in bytes),
+        # so lop off any extra characters as necessary
+        token = (token + replacements)[0:token_length]
 
         cmd = "INSERT INTO registration(token, discord_id, discord_name, is_verified) VALUES (%s,%s,%s,0)"
         db.execute(cmd, (token, discord_id, discord_name))
@@ -66,7 +87,8 @@ def confirm_discord_user(token: str, callsign: str) -> bool:
     db = conn.cursor()
 
     # First, check if the token exists
-    cmd = "SELECT * FROM registration WHERE token=%s"
+    # TODO: replace this query with a SELECT COUNT(*) for optimization
+    cmd = "SELECT discord_id FROM registration WHERE token=%s"
     db.execute(cmd, (token,))
     user = db.fetchone()
 
@@ -99,7 +121,6 @@ async def get_user_record(param, client: Client = None) -> UserRegistration:
         if result is None:
             return None
         else:
-            # user = UserRegistration()
             last_updated = result[0]
             token = result[1]
             discord_id = result[2]
@@ -252,22 +273,14 @@ def get_messages() -> List[FsdMessage]:
 
     messages = cursor.fetchall()
 
-    # Old SQLite stuff
-    # cursor.execute("SELECT MAX(id) FROM messages")
-    # most_recent_id = cursor.fetchone()[0]
-
     # Default case: no messages retrieved
     if len(messages) == 0:
         most_recent_id = 0
     else:
         most_recent_id = messages[-1][0]
 
-
     cmd = "DELETE FROM messages WHERE id <= %s;"
     cursor.execute(cmd, (most_recent_id,))
-
-    # Old SQLite stuff
-    # cursor.execute("COMMIT;")
 
     conn.commit()
     conn.close()
@@ -298,28 +311,6 @@ def get_messages() -> List[FsdMessage]:
     return message_list
 
 
-def is_beta_tester(discord_id: int) -> bool:
-    """
-    (CLOSED BETA ONLY) Determines if a Discord user is part of the closed beta.
-    This info is stored in a SQLite file named `testers.db`.
-
-    :param discord_id:  Discord snowflake ID of the user to check
-
-    :return:    True if a beta tester, False otherwise
-    """
-    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=DB_NAME)
-    db = conn.cursor()
-
-    cmd = "SELECT * FROM testers where discord_id=%s"
-    db.execute(cmd, (discord_id,))
-    user = db.fetchone()
-    conn.close()
-    if user is not None:
-        return True
-    else:
-        return False
-
-
 def user_exists(discord_id: int) -> bool:
     """
     Internal helper function for determining if a particular Discord ID is in the DB.
@@ -329,7 +320,8 @@ def user_exists(discord_id: int) -> bool:
     """
     conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=DB_NAME)
     cursor = conn.cursor()
-    cmd = "SELECT * FROM registration WHERE discord_id=%s;"
+    # TODO: replace this query with a SELECT COUNT(*) for optimization
+    cmd = "SELECT token FROM registration WHERE discord_id=%s;"
     cursor.execute(cmd,(discord_id,))
     user = cursor.fetchone()
 
@@ -387,9 +379,5 @@ async def get_channel(client: Client, discord_id: int) -> DMChannel:
         # Save to internal dictionary
         pm_channels[discord_id] = ch
         channel = ch
-
-        # channel = client.get_channel(channel_id)
-        # channel = client.get_all_channels()
-        # pm_channels[channel_id] = channel
 
     return channel
