@@ -38,7 +38,7 @@ async def forward_messages():
                     # if it's a frequency message (i.e. @xxyyy), parse it into a user-friendly format
                     if msg.receiver.startswith('@'):
                         freq = msg.receiver.replace('@','1')[:3] + '.' + msg.receiver[3:]
-                        dm_contents = f'**{msg.sender} ({freq} MHz):**\n{msg.message}'
+                        dm_contents = f'**{msg.sender}** ({freq} MHz):\n{msg.message}'
 
                     else:
                         dm_contents = f'**{msg.sender}**:\n{msg.message}'

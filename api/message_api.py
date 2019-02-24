@@ -1,7 +1,6 @@
-from flask import Flask, request, abort, jsonify
+from flask import Flask, request, jsonify
 from dbmodels.fsd_message import FsdMessage
 from dbmanager import db_manager
-import sqlite3
 import logging
 import re
 from datetime import datetime, timedelta
@@ -47,12 +46,11 @@ def register_user():
         else:
             db_manager.confirm_discord_user(token, callsign.upper())
 
-            # last_updated_time =
             expiry_time = requested_user.last_updated + timedelta(1)
 
             curr_time = round(datetime.utcnow().timestamp())
             message = f"You've registered with the callsign **{callsign}**. " +\
-                      "Don't forget to type `remove` here to fully deregister!\n" +\
+                      "Don't forget to send `remove` to fully deregister!\n" +\
                       f"Your registration will expire at **{str(expiry_time)[:16]} (UTC)**."
             db_manager.insert_message(FsdMessage(token, curr_time, '[Registration]', callsign, message))
 
@@ -109,10 +107,10 @@ def post_message():
         if re.match(receiver_regex, receiver_raw, re.ASCII):
 
             # Parse @xxyyy into 1xx.yyy MHz
-            if receiver_raw.startswith('@') and len(receiver_raw) == 6:
-                receiver = f'{receiver_raw[:3]}.{receiver_raw[3:]} MHz'
-            else:
-                receiver = receiver_raw
+            # if receiver_raw.startswith('@') and len(receiver_raw) == 6:
+            #     receiver = f'{receiver_raw[:3]}.{receiver_raw[3:]} MHz'
+            # else:
+            receiver = receiver_raw
         else:
             return jsonify(status=400, detail='Receiver field must be 20 characters or less,'
                                               'and can only contain letters, numbers, dashes, and underscores.'
@@ -120,7 +118,6 @@ def post_message():
                                               '"@" and contain precisely 5 numerical digits.'), \
                    400
 
-        # logging.info(f'{request.remote_addr} - - {token}, {timestamp}, {sender} > {receiver}: "{message}"')
         logging.info(f'Forwarded message received:\t{token}, {sender} > {receiver}')
 
         # Check token - if it's not associated with any Discord user, return an error
@@ -129,10 +126,8 @@ def post_message():
             logging.info(f'Token not found:\t\t\t({token})')
             return jsonify(status=400, detail="Provided token isn't registered!"), 400
 
-        # full_pm = FsdMessage(sender, receiver, timestamp, message)
         db_manager.insert_message(FsdMessage(token, timestamp, sender, receiver, message))
 
-        # return jsonify({'message': message}), 201
         return 'ok'
 
     except KeyError:
@@ -140,13 +135,3 @@ def post_message():
                         'Each message object should include a timestamp, sender, receiver, and message (contents).')
         return jsonify(status=400, detail=error_detail), 400
 
-
-# Currently unused
-def log_request(receive_time, timestamp, sender, receiver, message):
-
-    conn = sqlite3.connect('../request_log.db')
-    db = conn.cursor()
-    cmd = "INSERT INTO messages VALUES (?, ?, ?, ?, ?)"
-
-    db.excecute(cmd, receive_time)
-    conn.close()
