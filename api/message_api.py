@@ -50,7 +50,7 @@ def register_user():
 
             curr_time = round(datetime.utcnow().timestamp())
             message = f"You've registered with the callsign **{callsign}**. " +\
-                      "Don't forget to type `remove` here to fully deregister!\n" +\
+                      "Don't forget to send `remove` to fully deregister!\n" +\
                       f"Your registration will expire at **{str(expiry_time)[:16]} (UTC)**."
             db_manager.insert_message(FsdMessage(token, curr_time, '[Registration]', callsign, message))
 
