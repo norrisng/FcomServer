@@ -107,10 +107,10 @@ def post_message():
         if re.match(receiver_regex, receiver_raw, re.ASCII):
 
             # Parse @xxyyy into 1xx.yyy MHz
-            if receiver_raw.startswith('@') and len(receiver_raw) == 6:
-                receiver = f'{receiver_raw[:3]}.{receiver_raw[3:]} MHz'
-            else:
-                receiver = receiver_raw
+            # if receiver_raw.startswith('@') and len(receiver_raw) == 6:
+            #     receiver = f'{receiver_raw[:3]}.{receiver_raw[3:]} MHz'
+            # else:
+            receiver = receiver_raw
         else:
             return jsonify(status=400, detail='Receiver field must be 20 characters or less,'
                                               'and can only contain letters, numbers, dashes, and underscores.'
