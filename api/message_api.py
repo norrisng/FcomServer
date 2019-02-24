@@ -29,7 +29,7 @@ def register_user():
     :return: JSON object containing the token, Discord ID, Discord name, and callsign.
             If the token doesn't exist, an error is returned.
     """
-    callsign = request.args.get('callsign')
+    callsign = request.args.get('callsign').upper()
     token = request.args.get('token')
 
     logging.info(f'Registration request:\t\t{token} ({callsign})')
