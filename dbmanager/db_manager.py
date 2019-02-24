@@ -311,28 +311,6 @@ def get_messages() -> List[FsdMessage]:
     return message_list
 
 
-def is_beta_tester(discord_id: int) -> bool:
-    """
-    (CLOSED BETA ONLY) Determines if a Discord user is part of the closed beta.
-    This info is stored in a SQLite file named `testers.db`.
-
-    :param discord_id:  Discord snowflake ID of the user to check
-
-    :return:    True if a beta tester, False otherwise
-    """
-    conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=DB_NAME)
-    db = conn.cursor()
-
-    cmd = "SELECT * FROM testers where discord_id=%s"
-    db.execute(cmd, (discord_id,))
-    user = db.fetchone()
-    conn.close()
-    if user is not None:
-        return True
-    else:
-        return False
-
-
 def user_exists(discord_id: int) -> bool:
     """
     Internal helper function for determining if a particular Discord ID is in the DB.
