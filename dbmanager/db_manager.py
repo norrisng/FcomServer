@@ -1,7 +1,6 @@
 import mysql.connector as mariadb
 import secrets
 import os
-import time
 from dbmodels.user_registration import UserRegistration
 from dbmodels.fsd_message import FsdMessage
 from discord import DMChannel, Client
