@@ -1,6 +1,4 @@
 from discord import User, DMChannel, Client
-import logging
-import asyncio
 from dbmanager import db_manager
 from dbmodels import user_registration
 
