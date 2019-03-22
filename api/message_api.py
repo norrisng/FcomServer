@@ -135,3 +135,25 @@ def post_message():
                         'Each message object should include a timestamp, sender, receiver, and message (contents).')
         return jsonify(status=400, detail=error_detail), 400
 
+
+@app.route('/api/v1/deregister/<string:token>', methods=['DELETE'])
+def deregister(token: str):
+    """
+    Deregisters a user via the API.
+    Has the same effect as the `remove` Discord bot command.
+    :return: 'ok' on success, 404 if it doesn't exist
+    """
+
+    error_msg = jsonify(status=404, detail='The requested token was not found.')
+
+    discord_user = db_manager.get_user_registration(token)
+    if discord_user is None:
+        logging.info(f'Deregister request: [Not found] {token}')
+        return error_msg
+    else:
+        logging.info(f'Deregister token {token}')
+
+        if db_manager.remove_discord_user(token):
+            return 'ok'
+        else:
+            return error_msg

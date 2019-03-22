@@ -93,7 +93,7 @@ async def on_message(message):
             msg = f"Here's your Discord code: ```{fcom_api_token}```" +\
                     "\nPlease enter it into the client within the next 5 minutes.\n"
             logging.info(
-                f'Generate token:\t\t{fcom_api_token}, {message.channel.recipient.id} '
+                f'Generate token:\t{fcom_api_token}, {message.channel.recipient.id} '
                 f'({message.channel.recipient.name} #{message.channel.recipient.discriminator}) ')
         await message.channel.send(msg)
 
