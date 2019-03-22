@@ -9,6 +9,12 @@ from datetime import datetime, timedelta
 app = Flask(__name__)
 logging.basicConfig(filename='api.log', level=logging.INFO, format='%(asctime)s: %(message)s')
 
+try:
+    curr_version_file = open('../FcomServer/curr_client_version.txt')
+    curr_version = curr_version_file.read().replace('FcomClient/','')
+except FileNotFoundError:
+    curr_version = '0.0.0'
+
 
 @app.route('/api/v1/test', methods=['GET'])
 def test():
@@ -30,6 +36,7 @@ def register_user():
     """
     callsign = request.args.get('callsign').upper()
     token = request.args.get('token')
+    client_version = request.headers.get('User-Agent').replace('FcomClient/','')
 
     logging.info(f'Registration request:\t\t{token} ({callsign})')
 
@@ -53,6 +60,12 @@ def register_user():
             message = f"Callsign **{callsign}** " +\
                       f"(expires **{expiry_time_string}**)\n" +\
                       "To deregister, type `remove` here, or click on **Stop** inside the client."
+
+            if client_version != curr_version:
+                message = message + "\n\n**NEW CLIENT VERSION AVAILABLE**" +\
+                            f" - latest version is **{curr_version}** " +\
+                            "\nhttps://github.com/norrisng/FcomClient/releases"
+
             db_manager.insert_message(FsdMessage(token, curr_time, 'Registered', callsign, message))
 
             discord_id = requested_user.discord_id
