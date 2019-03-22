@@ -47,12 +47,13 @@ def register_user():
             db_manager.confirm_discord_user(token, callsign.upper())
 
             expiry_time = requested_user.last_updated + timedelta(1)
+            expiry_time_string = f"{str(expiry_time)[:16]} [UTC]"
 
             curr_time = round(datetime.utcnow().timestamp())
-            message = f"You've registered with the callsign **{callsign}**. " +\
-                      "Don't forget to send `remove` to fully deregister!\n" +\
-                      f"Your registration will expire at **{str(expiry_time)[:16]} (UTC)**."
-            db_manager.insert_message(FsdMessage(token, curr_time, '[Registration]', callsign, message))
+            message = f"Callsign **{callsign}** " +\
+                      f"(expires **{expiry_time_string}**)\n" +\
+                      "To deregister, type `remove` here, or click on **Stop** inside the client."
+            db_manager.insert_message(FsdMessage(token, curr_time, 'Registered', callsign, message))
 
             discord_id = requested_user.discord_id
             discord_name = requested_user.discord_name
