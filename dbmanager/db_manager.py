@@ -13,7 +13,7 @@ DB_PASSWORD = os.environ['FCOM_DB_PASSWORD']
 DB_NAME = 'fcom'
 
 
-# This acts as a local cache for DMChannel objects.
+# Local cache for DMChannel objects.
 # This avoids the need to reach the Discord API every time a DM needs to be sent.
 pm_channels = {}
 
@@ -182,28 +182,45 @@ def remove_stale_users():
     conn.close()
 
 
-def remove_discord_user(discord_id: int) -> bool:
+def remove_discord_user(search_param: int) -> bool:
     """
     Removes the specified user from the DB.
 
-    :param discord_id:  ID of the Discord user to de-register
+    :param search_param:  ID of the Discord user to de-register
     :return:            True on success, False otherwise
     """
-    if not user_exists(discord_id):
+    if not user_exists(search_param):
         return False
     else:
-        conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=DB_NAME)
+        # Discord ID provided
+        if isinstance(search_param, int):
+            cmd = "DELETE FROM registration WHERE discord_id=%s"
+            discord_id = search_param
 
-        db = conn.cursor()
-        cmd = "DELETE FROM registration WHERE discord_id=%s"
-        db.execute(cmd,(discord_id,))
+        # Discord code/token provided
+        elif isinstance(search_param, str):
+            cmd = "DELETE FROM registration WHERE token=%s"
 
-        conn.commit()
-        conn.close()
+            # If given token, retrieve Discord ID so we can delete cache entry
+            discord_id = get_user_registration(search_param).discord_id
+
+        # Neither provided
+        else:
+            return False
+
+        # Delete from cache, if present
         try:
             del pm_channels[discord_id]
         except KeyError:
             pass
+
+        conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=DB_NAME)
+        db = conn.cursor()
+        db.execute(cmd, (search_param,))
+
+        conn.commit()
+        conn.close()
+
         return True
 
 
@@ -311,18 +328,30 @@ def get_messages() -> List[FsdMessage]:
     return message_list
 
 
-def user_exists(discord_id: int) -> bool:
+def user_exists(search_param: int) -> bool:
     """
     Internal helper function for determining if a particular Discord ID is in the DB.
 
-    :param discord_id:  Discord ID
+    :param search_param:  Discord ID or registration token
     :return:            True if it exists, False otherwise
     """
     conn = mariadb.connect(host=DB_URI, user=DB_USERNAME, password=DB_PASSWORD, database=DB_NAME)
     cursor = conn.cursor()
     # TODO: replace this query with a SELECT COUNT(*) for optimization
-    cmd = "SELECT token FROM registration WHERE discord_id=%s;"
-    cursor.execute(cmd,(discord_id,))
+
+    # Discord ID provided
+    if isinstance(search_param, int):
+        cmd = "SELECT token FROM registration WHERE discord_id=%s;"
+
+    # Discord code/token provided
+    elif isinstance(search_param, str):
+        cmd = "SELECT token FROM registration WHERE token=%s;"
+
+    # Neither provided
+    else:
+        return False
+
+    cursor.execute(cmd, (search_param,))
     user = cursor.fetchone()
 
     conn.close()

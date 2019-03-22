@@ -144,11 +144,16 @@ def deregister(token: str):
     :return: 'ok' on success, 404 if it doesn't exist
     """
 
+    error_msg = jsonify(status=404, detail='The requested token was not found.')
+
     discord_user = db_manager.get_user_registration(token)
     if discord_user is None:
         logging.info(f'Deregister request: [Not found] {token}')
-        return jsonify(status=404, detail='The requested token was not found.')
+        return error_msg
     else:
         logging.info(f'Deregister token {token}')
-        # TODO: implement db_manager.remove_discord_user(token)
-        return 'ok'
+
+        if db_manager.remove_discord_user(token):
+            return 'ok'
+        else:
+            return error_msg
