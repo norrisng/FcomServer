@@ -4,8 +4,10 @@ from aiohttp import ClientError
 from websockets import exceptions as websocket_error
 from bot import bot_user_commands
 from dbmanager import db_manager
+from logging.handlers import TimedRotatingFileHandler
 import asyncio
 import logging
+import os
 
 description = 'FCOM bot'
 bot = commands.Bot(command_prefix='!', description=description)
@@ -13,7 +15,20 @@ bot = commands.Bot(command_prefix='!', description=description)
 token_file = open('../FcomServer/bot_token.txt')
 token = token_file.read()
 
-logging.basicConfig(filename='bot.log', level=logging.INFO, format='%(asctime)s: %(message)s')
+# Logging config #
+
+if not os.path.exists('logs'):
+    os.mkdir('logs')
+
+formatter = logging.Formatter(fmt='%(asctime)s: %(message)s')
+handler = TimedRotatingFileHandler(f'logs/bot.log', when='midnight', backupCount=15)
+handler.setFormatter(formatter)
+
+logger = logging.getLogger(__name__)
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
+
+# End logging config #
 
 
 # Reference: https://github.com/Rapptz/discord.py/blob/rewrite/examples/background_task.py
@@ -48,7 +63,7 @@ async def forward_messages():
 
                 else:
                     # NOTE: the API now checks if a token's registered before inserting messages
-                    logging.info(f'Token {msg.token} is not registered!')
+                    logger.info(f'Token {msg.token} is not registered!')
 
         await asyncio.sleep(3)
 
@@ -65,7 +80,7 @@ async def prune_registrations():
 
 @bot.event
 async def on_ready():
-    logging.info(f'Now logged in as {bot.user.name} ({bot.user.id})')
+    logger.info(f'Now logged in as {bot.user.name} ({bot.user.id})')
 
 
 @bot.event
@@ -92,8 +107,8 @@ async def on_message(message):
         else:
             msg = f"Here's your Discord code: ```{fcom_api_token}```" +\
                     "\nPlease enter it into the client within the next 5 minutes.\n"
-            logging.info(
-                f'Generate token:\t\t{fcom_api_token}, {message.channel.recipient.id} '
+            logger.info(
+                f'Generate token:\t{fcom_api_token}, {message.channel.recipient.id} '
                 f'({message.channel.recipient.name} #{message.channel.recipient.discriminator}) ')
         await message.channel.send(msg)
 
@@ -118,7 +133,7 @@ async def on_message(message):
 
         if bot_user_commands.remove_user(message.channel.recipient.id):
             msg = "Successfully deregistered! You'll no longer receive forwarded messages."
-            logging.info(f'Deregister user:\t{message.channel.recipient.id} '
+            logger.info(f'Deregister user:\t{message.channel.recipient.id} '
                          f'({message.channel.recipient.name} #{message.channel.recipient.discriminator})')
         else:
             msg = "Could not unregister. Are you sure you're registered?"
@@ -163,7 +178,7 @@ def start_bot():
             asyncio.sleep(wait_interval)
 
         except (websocket_error.ConnectionClosed) as e:
-            logging.info(f'{e.message}')
+            logger.info(f'{e.message}')
 
             # Don't reconnect on authentication failure
             if e.code == 4004:

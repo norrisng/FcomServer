@@ -2,12 +2,40 @@ from flask import Flask, request, jsonify
 from dbmodels.fsd_message import FsdMessage
 from dbmanager import db_manager
 import logging
+from logging.handlers import TimedRotatingFileHandler
+import os
 import re
 from datetime import datetime, timedelta
 
 
 app = Flask(__name__)
-logging.basicConfig(filename='api.log', level=logging.INFO, format='%(asctime)s: %(message)s')
+
+# Logging config #
+
+if not os.path.exists('logs'):
+    os.mkdir('logs')
+
+formatter = logging.Formatter(fmt='%(asctime)s: %(message)s')
+handler = TimedRotatingFileHandler(f'logs/api.log', when='midnight', backupCount=15)
+handler.setFormatter(formatter)
+
+logger = logging.getLogger(__name__)
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
+
+# End logging config #
+
+try:
+    curr_version_file = open('../FcomServer/curr_client_version.txt')
+    curr_version = curr_version_file.read().replace('FcomClient/','')
+
+    # Just in case curr_client_version.txt isn't in the format FcomClient/x.y.z
+    version_regex = '\d\.\d\.\d'    # x.y.z
+    if not re.match(version_regex, curr_version):
+        curr_version = '0.0.0'
+
+except FileNotFoundError:
+    curr_version = '0.0.0'
 
 
 @app.route('/api/v1/test', methods=['GET'])
@@ -30,8 +58,9 @@ def register_user():
     """
     callsign = request.args.get('callsign').upper()
     token = request.args.get('token')
+    client_version = request.headers.get('User-Agent').replace('FcomClient/','')
 
-    logging.info(f'Registration request:\t\t{token} ({callsign})')
+    logger.info(f'Registration:\t{token} ({callsign})')
 
     if token is None:
         return jsonify(status=400, detail='Missing token'), 400
@@ -47,12 +76,26 @@ def register_user():
             db_manager.confirm_discord_user(token, callsign.upper())
 
             expiry_time = requested_user.last_updated + timedelta(1)
+            expiry_time_string = f"{str(expiry_time)[:16]}"
 
             curr_time = round(datetime.utcnow().timestamp())
-            message = f"You've registered with the callsign **{callsign}**. " +\
-                      "Don't forget to send `remove` to fully deregister!\n" +\
-                      f"Your registration will expire at **{str(expiry_time)[:16]} (UTC)**."
-            db_manager.insert_message(FsdMessage(token, curr_time, '[Registration]', callsign, message))
+            message = f"Callsign **{callsign}** " +\
+                      f"(expires **{expiry_time_string}** UTC)\n" +\
+                      "To deregister, type `remove` here, or click on **Stop** inside the client."
+
+            # Error in parsing curr_client_version.txt
+            if curr_version == '0.0.0':
+                pass
+            # Client version is newer (suppresses "new version available" message)
+            elif float(client_version[0:3]) > float(curr_version[0:3]):
+                pass
+            # Outdated client version
+            elif client_version != curr_version:
+                message = message + "\n\n**NEW CLIENT VERSION AVAILABLE**" +\
+                            f" - latest version is **{curr_version}** " +\
+                            "\nhttps://github.com/norrisng/FcomClient/releases"
+
+            db_manager.insert_message(FsdMessage(token, curr_time, 'Registered', callsign, message))
 
             discord_id = requested_user.discord_id
             discord_name = requested_user.discord_name
@@ -118,12 +161,12 @@ def post_message():
                                               '"@" and contain precisely 5 numerical digits.'), \
                    400
 
-        logging.info(f'Forwarded message received:\t{token}, {sender} > {receiver}')
+        logger.info(f'Message:\t\t{token}, {sender} > {receiver}')
 
         # Check token - if it's not associated with any Discord user, return an error
         discord_user = db_manager.get_user_registration(token)
         if discord_user is None:
-            logging.info(f'Token not found:\t\t\t({token})')
+            logger.info(f'Token not found:\t\t\t({token})')
             return jsonify(status=400, detail="Provided token isn't registered!"), 400
 
         db_manager.insert_message(FsdMessage(token, timestamp, sender, receiver, message))
@@ -135,3 +178,25 @@ def post_message():
                         'Each message object should include a timestamp, sender, receiver, and message (contents).')
         return jsonify(status=400, detail=error_detail), 400
 
+
+@app.route('/api/v1/deregister/<string:token>', methods=['DELETE'])
+def deregister(token: str):
+    """
+    Deregisters a user via the API.
+    Has the same effect as the `remove` Discord bot command.
+    :return: 'ok' on success, 404 if it doesn't exist
+    """
+
+    error_msg = jsonify(status=404, detail='The requested token was not found.')
+
+    discord_user = db_manager.get_user_registration(token)
+    if discord_user is None:
+        logger.info(f'Deregister request: [Not found] {token}')
+        return error_msg
+    else:
+        logger.info(f'Deregister token {token}')
+
+        if db_manager.remove_discord_user(token):
+            return 'ok'
+        else:
+            return error_msg

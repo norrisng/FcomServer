@@ -3,10 +3,14 @@
 # Discord API bot token
 bot_token.txt
 
+# Current client version
+/curr_client_version.txt
+
 # SQLite DBs
 *.db
 
 # Log files
+logs
 *.log
 
 ## Virtualenv
@@ -24,3 +28,4 @@ __pycache__/
 ## JetBrains
 ## https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 .idea/
+
