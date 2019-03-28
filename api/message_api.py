@@ -2,12 +2,28 @@ from flask import Flask, request, jsonify
 from dbmodels.fsd_message import FsdMessage
 from dbmanager import db_manager
 import logging
+from logging.handlers import TimedRotatingFileHandler
+import os
 import re
 from datetime import datetime, timedelta
 
 
 app = Flask(__name__)
-logging.basicConfig(filename='api.log', level=logging.INFO, format='%(asctime)s: %(message)s')
+
+# Logging config #
+
+if not os.path.exists('logs'):
+    os.mkdir('logs')
+
+formatter = logging.Formatter(fmt='%(asctime)s: %(message)s')
+handler = TimedRotatingFileHandler(f'logs/api.log', when='midnight', backupCount=15)
+handler.setFormatter(formatter)
+
+logger = logging.getLogger(__name__)
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
+
+# End logging config #
 
 try:
     curr_version_file = open('../FcomServer/curr_client_version.txt')
@@ -44,7 +60,7 @@ def register_user():
     token = request.args.get('token')
     client_version = request.headers.get('User-Agent').replace('FcomClient/','')
 
-    logging.info(f'Registration request:\t\t{token} ({callsign})')
+    logger.info(f'Registration request:\t\t{token} ({callsign})')
 
     if token is None:
         return jsonify(status=400, detail='Missing token'), 400
@@ -145,12 +161,12 @@ def post_message():
                                               '"@" and contain precisely 5 numerical digits.'), \
                    400
 
-        logging.info(f'Forwarded message received:\t{token}, {sender} > {receiver}')
+        logger.info(f'Forwarded message received:\t{token}, {sender} > {receiver}')
 
         # Check token - if it's not associated with any Discord user, return an error
         discord_user = db_manager.get_user_registration(token)
         if discord_user is None:
-            logging.info(f'Token not found:\t\t\t({token})')
+            logger.info(f'Token not found:\t\t\t({token})')
             return jsonify(status=400, detail="Provided token isn't registered!"), 400
 
         db_manager.insert_message(FsdMessage(token, timestamp, sender, receiver, message))
@@ -175,10 +191,10 @@ def deregister(token: str):
 
     discord_user = db_manager.get_user_registration(token)
     if discord_user is None:
-        logging.info(f'Deregister request: [Not found] {token}')
+        logger.info(f'Deregister request: [Not found] {token}')
         return error_msg
     else:
-        logging.info(f'Deregister token {token}')
+        logger.info(f'Deregister token {token}')
 
         if db_manager.remove_discord_user(token):
             return 'ok'
