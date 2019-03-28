@@ -60,7 +60,7 @@ def register_user():
     token = request.args.get('token')
     client_version = request.headers.get('User-Agent').replace('FcomClient/','')
 
-    logger.info(f'Registration request:\t\t{token} ({callsign})')
+    logger.info(f'Registration:\t{token} ({callsign})')
 
     if token is None:
         return jsonify(status=400, detail='Missing token'), 400
@@ -161,7 +161,7 @@ def post_message():
                                               '"@" and contain precisely 5 numerical digits.'), \
                    400
 
-        logging.info(f'Message forwarded:\t{token}, {sender} > {receiver}')
+        logger.info(f'Message:\t\t{token}, {sender} > {receiver}')
 
         # Check token - if it's not associated with any Discord user, return an error
         discord_user = db_manager.get_user_registration(token)
