@@ -12,6 +12,12 @@ logging.basicConfig(filename='api.log', level=logging.INFO, format='%(asctime)s:
 try:
     curr_version_file = open('../FcomServer/curr_client_version.txt')
     curr_version = curr_version_file.read().replace('FcomClient/','')
+
+    # Just in case curr_client_version.txt isn't in the format FcomClient/x.y.z
+    version_regex = '\d\.\d\.\d'    # x.y.z
+    if not re.match(version_regex, curr_version):
+        curr_version = '0.0.0'
+
 except FileNotFoundError:
     curr_version = '0.0.0'
 
@@ -61,7 +67,14 @@ def register_user():
                       f"(expires **{expiry_time_string}**)\n" +\
                       "To deregister, type `remove` here, or click on **Stop** inside the client."
 
-            if client_version != curr_version:
+            # Error in parsing curr_client_version.txt
+            if curr_version == '0.0.0':
+                pass
+            # Client version is newer (suppresses "new version available" message)
+            elif float(client_version[0:3]) > float(curr_version[0:3]):
+                pass
+            # Outdated client version
+            elif client_version != curr_version:
                 message = message + "\n\n**NEW CLIENT VERSION AVAILABLE**" +\
                             f" - latest version is **{curr_version}** " +\
                             "\nhttps://github.com/norrisng/FcomClient/releases"
