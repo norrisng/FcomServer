@@ -76,7 +76,7 @@ def register_user():
             db_manager.confirm_discord_user(token, callsign.upper())
 
             expiry_time = requested_user.last_updated + timedelta(1)
-            expiry_time_string = f"{str(expiry_time)[:16]} [UTC]"
+            expiry_time_string = f"{str(expiry_time)[:16]} UTC"
 
             curr_time = round(datetime.utcnow().timestamp())
             message = f"Callsign **{callsign}** " +\
