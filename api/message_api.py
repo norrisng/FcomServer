@@ -145,7 +145,7 @@ def post_message():
                                               '"@" and contain precisely 5 numerical digits.'), \
                    400
 
-        logging.info(f'Forwarded message received:\t{token}, {sender} > {receiver}')
+        logging.info(f'Message forwarded:\t{token}, {sender} > {receiver}')
 
         # Check token - if it's not associated with any Discord user, return an error
         discord_user = db_manager.get_user_registration(token)
