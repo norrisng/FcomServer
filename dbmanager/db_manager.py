@@ -103,8 +103,6 @@ def confirm_discord_user(token: str, callsign: str) -> bool:
         return True
 
 
-# NOTE: original signature:
-# get_user_record(param, client: Client) -> UserRegistration:
 async def get_user_record(param, client: Client = None) -> UserRegistration:
     """
     Retrieves the specified user from the registration DB.
@@ -186,8 +184,8 @@ def remove_discord_user(search_param: int) -> bool:
     """
     Removes the specified user from the DB.
 
-    :param search_param:  ID of the Discord user to de-register
-    :return:            True on success, False otherwise
+    :param search_param:    ID of the Discord user to de-register
+    :return:                True on success, False otherwise
     """
     if not user_exists(search_param):
         return False
@@ -243,7 +241,7 @@ def get_messages() -> List[FsdMessage]:
     Retrieve and dequeue messages from the DB queue.
     Messages are aggregated if they share the same token and sender.
     Individual message contents are separated by a newline ('\n');
-    e.g. 'contents of earlier message\ncontents of later message'.
+    e.g. 'contents of earlier message\ncontents of later message'
 
     :return:    Messages in DB queue, aggregated by token/sender,
                 and sorted by registration token, then by arrival order
@@ -311,11 +309,6 @@ def get_messages() -> List[FsdMessage]:
     # FsdMessage:
     #   (token, timestamp, sender, receiver, message)
     for msg in messages:
-        # token = msg[0]
-        # timestamp = msg[1]
-        # sender = msg[2]
-        # receiver = msg[3]
-        # combined_contents = msg[4]
 
         token = msg[2]
         timestamp = msg[3]
