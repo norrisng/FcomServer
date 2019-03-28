@@ -20,7 +20,7 @@ class UserRegistration:
         self.discord_id = discord_id
         self.discord_name = discord_name
 
-        # SQLite doesn't have a bool type, so we have to convert 1/0 (T/F) into bool
+        # Convert 1/0 (T/F) into bool
         if is_verified == 0:
             self.is_verified = False
         elif is_verified == 1:

@@ -49,6 +49,23 @@ Create the following environment variables for the login:
 
 See included `schema.sql` file.
 
+### Additional text files ###
+
+#### Discord bot token ####
+
+Create a file named `bot_token.txt`
+This file should contain the Discord bot token, and nothing else.
+
+This token can be found at https://discordapp.com/developers/applications/ 
+
+#### Current client version ####
+
+Create a file named `curr_client_version.txt`. 
+This file should contain the current version number in the following format:
+```
+FcomClient/x.y.z
+``` 
+`x.y.z` is the client version number (e.g. `0.8.0`).
 
 ### Bot and API ###
 
