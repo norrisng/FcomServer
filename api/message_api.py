@@ -27,7 +27,7 @@ logger.setLevel(logging.INFO)
 
 try:
     curr_version_file = open('../FcomServer/curr_client_version.txt')
-    curr_version = curr_version_file.read().replace('FcomClient/','')
+    curr_version = curr_version_file.read().replace('FcomClient/','').rstrip()
 
     # Just in case curr_client_version.txt isn't in the format FcomClient/x.y.z
     version_regex = '\d\.\d\.\d'    # x.y.z
