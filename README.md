@@ -4,6 +4,8 @@
 
 Also, I would prefer that you don't run an instance of my bot. Just use the one I have!
 
+
+
 ## Overview ##
 
 Although the bot appears to users as a single, cohesive entity, it actually consists of three separate components:
@@ -12,6 +14,7 @@ Although the bot appears to users as a single, cohesive entity, it actually cons
     * Accepts forwarded messages
     * Allows clients to "confirm" a registration token and provide a callsign
         * The API responds with the Discord username (and Snowflake ID) associated with the given token
+    * Allows users to deregister (i.e. stop forwarding messages) through the client application
 * A Discord bot
     * Sends the forwarded messages to the associated Discord user
 * A relational database (specifically, MariaDB)
@@ -20,15 +23,13 @@ Although the bot appears to users as a single, cohesive entity, it actually cons
 
 The bot and the API need to be run simultaneously.
 
+
+
 ## Requirements
 
-- Python 3.6+
-- discord.py (rewrite)
-- Flask
-- Gunicorn
-- mysql.connector
+Python 3.6+ is required. For required packages, please refer to the included `requirements.txt`. 
 
-The `requirements.txt` file also contains a number of dependencies, but these are the main ones required.
+
 
 ## Server setup
 
@@ -62,22 +63,22 @@ This token can be found at https://discordapp.com/developers/applications/
 
 Create a file named `curr_client_version.txt`. 
 This file should contain the current version number in the following format:
+
 ```
 FcomClient/x.y.z
-``` 
-`x.y.z` is the client version number (e.g. `0.8.0`).
+```
+`x.y.z` is the client version number (e.g. `0.8.0`). This string should be updated whenever a new [FcomClient](https://github.com/norrisng/FcomClient/) is released, as users will be automatically notified of a client update upon callsign registration.
 
 ### Bot and API ###
 
 First, download from GitHub, then set up `virtualenv`:
 
-```commandline
+```bash
 cd FcomServer
 python3.6 -m venv ./venv
 source ./venv/bin/activate
 pip3 install wheel
 pip3 install -r requirements.txt
-pip3 install gunicorn
 ```
 
 Create a file named `bot_token.txt` inside the FcomServer folder (i.e. at the top level). It should contain your bot token, and nothing else.
@@ -91,7 +92,7 @@ python3 main_api.py
 If you want to have both run in the background, you'll have to set them up as a service on your operating system.
 
 As is the case with any Flask API, please use a production server to serve the FCOM API.
-My implementation uses `gunicorn`, but you can use anything, really.
+My implementation uses `gunicorn`, but you can use anything, really. If not using the former, you'll have to remove `gevent`/`greenlet`/`gunicorn` from the `requirements.txt` file before installing dependencies via `pip`.
 
 To get out of the virtual environment:
 
