@@ -1,5 +1,5 @@
 from discord.ext import commands
-from discord import errors as discordpy_error
+from discord import DMChannel, errors as discordpy_error
 from aiohttp import ClientError
 from websockets import exceptions as websocket_error
 from bot import bot_user_commands
@@ -95,6 +95,10 @@ async def on_message(message):
     """
     # Do not reply to self
     if message.author.id == bot.user.id:
+        return
+
+    # Ignore non-DM messages
+    elif not isinstance(message.channel, DMChannel):
         return
 
     # register
