@@ -8,12 +8,12 @@ from logging.handlers import TimedRotatingFileHandler
 import asyncio
 import logging
 import os
+import discord_credentials
 
 description = 'FCOM bot'
 bot = commands.Bot(command_prefix='!', description=description)
 
-token_file = open('../FcomServer/bot_token.txt')
-token = token_file.read()
+token = discord_credentials.TOKEN
 
 # Logging config #
 
@@ -138,7 +138,7 @@ async def on_message(message):
         if bot_user_commands.remove_user(message.channel.recipient.id):
             msg = "Successfully deregistered! You'll no longer receive forwarded messages."
             logger.info(f'Deregister user:\t{message.channel.recipient.id} '
-                         f'({message.channel.recipient.name} #{message.channel.recipient.discriminator})')
+                        f'({message.channel.recipient.name} #{message.channel.recipient.discriminator})')
         else:
             msg = "Could not unregister. Are you sure you're registered?"
 
@@ -165,7 +165,7 @@ def start_bot():
         try:
             bot.run(token)
 
-        except (discordpy_error.HTTPException) as e:
+        except discordpy_error.HTTPException as e:
             logging.error("Couldn't login (discord.errors.HTTPException)")
             logging.error(f'{e.message}')
 
@@ -173,7 +173,7 @@ def start_bot():
                 wait_interval = wait_interval + 5
             asyncio.sleep(wait_interval)
 
-        except (ClientError) as e:
+        except ClientError as e:
             logging.error("Couldn't login (discord.errors.ClientError)")
             logging.error(f'{e.message}')
 
@@ -181,7 +181,7 @@ def start_bot():
                 wait_interval = wait_interval + 5
             asyncio.sleep(wait_interval)
 
-        except (websocket_error.ConnectionClosed) as e:
+        except websocket_error.ConnectionClosed as e:
             logger.info(f'{e.message}')
 
             # Don't reconnect on authentication failure
