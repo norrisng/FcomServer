@@ -5,6 +5,7 @@ from dbmodels.user_registration import UserRegistration
 from dbmodels.fsd_message import FsdMessage
 from discord import DMChannel, Client
 from typing import List
+import discord_credentials
 
 # MariaDB
 DB_URI = 'localhost'
@@ -392,7 +393,18 @@ async def get_channel(client: Client, discord_id: int) -> DMChannel:
     try:
         channel = pm_channels[discord_id]
     except KeyError:
-        user = await client.get_user_info(discord_id)
+        # (0.10.1 and earlier) Old implementation:
+        #   This makes an API call.
+        #   get_user_info() would fail silently, returning None instead of an exception.
+        #
+        #   This may have been due to this:
+        #   https://www.reddit.com/r/discordapp/comments/couffh/is_discord_going_to_undo_the_recent_api_change/
+        #   -----
+        # user = await client.get_user_info(discord_id)
+        # ch = user.dm_channel
+
+        # (0.10.2+) New implementation: this is a cache lookup
+        user = client.get_guild(discord_credentials.FCOM_DISCORD_SERVER_ID).get_member(discord_id)
         ch = user.dm_channel
 
         if ch is None:
