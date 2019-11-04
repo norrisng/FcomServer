@@ -8,12 +8,12 @@ from logging.handlers import TimedRotatingFileHandler
 import asyncio
 import logging
 import os
+import discord_credentials
 
 description = 'FCOM bot'
 bot = commands.Bot(command_prefix='!', description=description)
 
-token_file = open('../FcomServer/bot_token.txt')
-token = token_file.read()
+token = discord_credentials.TOKEN
 
 # Logging config #
 
