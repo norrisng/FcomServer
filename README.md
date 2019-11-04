@@ -50,14 +50,22 @@ Create the following environment variables for the login:
 
 See included `schema.sql` file.
 
-### Additional text files ###
+### Additional files ###
 
-#### Discord bot token ####
+All additional files are to be created in the project root (i.e. `/FcomServer`)
 
-Create a file named `bot_token.txt`
-This file should contain the Discord bot token, and nothing else.
+#### Discord credentials ####
 
-This token can be found at https://discordapp.com/developers/applications/ 
+Create a file named `discord_credentials.py`:
+```python
+TOKEN = 'token goes here'
+FCOM_DISCORD_SERVER_ID = 1234567
+```
+The token can be found at https://discordapp.com/developers/applications/
+
+`FCOM_DISCORD_SERVER_ID` is the (snowflake) ID of the Discord server on which the Discord bot lives on.
+This can be obtained by right-clicking the server's icon in the sidebar of the Discord client, and clicking "Copy ID"
+(you'll need enable Developer Mode under App Settings > Appearance) 
 
 #### Current client version ####
 
