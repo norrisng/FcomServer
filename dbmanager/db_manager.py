@@ -405,7 +405,7 @@ async def get_channel(client: Client, discord_id: int) -> DMChannel:
         # user = await client.get_user_info(discord_id)
         # ch = user.dm_channel
 
-        # (0.10.2+) New implementation: this is a cache lookup
+        # (0.11.0+) New implementation: this is a cache lookup
         user = client.get_guild(discord_credentials.FCOM_DISCORD_SERVER_ID).get_member(discord_id)
         ch = user.dm_channel
 
