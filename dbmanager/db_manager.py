@@ -367,12 +367,14 @@ def get_user_record_tuple(param) -> ():
 
     # discord_id provided
     if isinstance(param, int):
-        cmd = "SELECT * FROM registration WHERE discord_id=%s"
+        cmd = '''SELECT last_updated, token, discord_id, discord_name, is_verified, callsign 
+                 FROM registration WHERE discord_id=%s'''
 
     # token provided
     # else:
     elif isinstance(param, str):
-        cmd = "SELECT * FROM registration WHERE token=%s"
+        cmd = '''SELECT last_updated, token, discord_id, discord_name, is_verified, callsign 
+                 FROM registration WHERE token=%s'''
     else:
         return None
 
