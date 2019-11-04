@@ -2,6 +2,7 @@
 
 # Discord API bot token
 bot_token.txt
+discord_credentials.py
 
 # Current client version
 /curr_client_version.txt
