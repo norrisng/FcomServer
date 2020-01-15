@@ -230,7 +230,7 @@ def insert_message(msg: FsdMessage):
     cmd = """   INSERT INTO 
                     messages(token, time_received, sender, receiver, message) 
                 VALUES 
-                    (%s, FROM_UNIXTIME(%s), %s, %s, %s)
+                    (%s, FROM_UNIXTIME(%s / 1000), %s, %s, %s)
             """
     db.execute(cmd, (msg.token, msg.timestamp, msg.sender, msg.receiver, msg.message))
     conn.commit()
