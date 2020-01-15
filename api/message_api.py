@@ -75,7 +75,7 @@ def register_user():
         else:
             db_manager.confirm_discord_user(token, callsign.upper())
 
-            expiry_time = requested_user.last_updated + timedelta(1)
+            expiry_time = requested_user.last_updated + timedelta(1.5)
             expiry_time_string = f"{str(expiry_time)[:16]}"
 
             curr_time = round(datetime.utcnow().timestamp())
