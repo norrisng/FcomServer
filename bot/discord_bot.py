@@ -59,7 +59,12 @@ async def forward_messages():
                         dm_contents = f'**{msg.sender}**:\n{msg.message}'
 
                     dm_channel = dm_user.channel_object
-                    await dm_channel.send(dm_contents)
+                    try:
+                        await dm_channel.send(dm_contents)
+                    except discordpy_error.Forbidden:
+                        logger.info(f'[HTTP 403] Could not send DM to {dm_user.discord_name} ({dm_user.discord_id})')
+                    except discordpy_error.HTTPException as e:
+                        logger.error(f'{e.message}')
 
                 else:
                     # NOTE: the API now checks if a token's registered before inserting messages
