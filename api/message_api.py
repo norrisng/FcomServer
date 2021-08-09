@@ -177,6 +177,12 @@ def post_message():
         error_detail = ('Missing parameter(s). Requests should include a token, and an array of message objects.'
                         'Each message object should include a timestamp, sender, receiver, and message (contents).')
         return jsonify(status=400, detail=error_detail), 400
+    
+    except:
+        logger.error(f'[Error] {payload}')
+        error_detail = ('An unknown error occurred'
+                        'Please see request_body for your original request which resulted in this error.')
+        return jsonify(status=500, detail=error_detail, request_body=payload), 500
 
 
 @app.route('/api/v1/deregister/<string:token>', methods=['DELETE'])
