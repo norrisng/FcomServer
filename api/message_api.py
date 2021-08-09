@@ -140,9 +140,9 @@ def post_message():
         if re.match(sender_regex, sender_raw, re.ASCII):
             sender = sender_raw
         else:
-            return jsonify(status=400, detail='Sender field must be 20 characters or less,'
-                                              'and can only contain letters, numbers, dashes, and underscores.'), \
-                   400
+            error_detail = ('Sender field must be 20 characters or less,'
+                            'and can only contain letters, numbers, dashes, and underscores.')
+            return jsonify(status=400, detail=error_detail), 400
 
         # Check receiver (we also have to accept frequencies; e.g. @22800)
         receiver_regex = '(@\d{5})|(\w|\d|_|-)+'
@@ -155,11 +155,11 @@ def post_message():
             # else:
             receiver = receiver_raw
         else:
-            return jsonify(status=400, detail='Receiver field must be 20 characters or less,'
-                                              'and can only contain letters, numbers, dashes, and underscores.'
-                                              'Alternatively, if it is a frequency message, it may begin with an '
-                                              '"@" and contain precisely 5 numerical digits.'), \
-                   400
+            error_detail = ('Receiver field must be 20 characters or less, '
+                            'and can only contain letters, numbers, dashes, and underscores.'
+                            'Alternatively, if it is a frequency message, it may begin with an '
+                            '"@" and contain precisely 5 numerical digits.')
+            return jsonify(status=400, detail=error_detail), 400
 
         logger.info(f'Message:\t\t{token}, {sender} > {receiver}')
 
