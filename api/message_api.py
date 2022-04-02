@@ -87,7 +87,7 @@ def register_user():
             if curr_version == '0.0.0':
                 pass
             # Client version is newer (suppresses "new version available" message)
-            elif float(client_version[0:3]) > float(curr_version[0:3]):
+            elif float(client_version[0:3]) >= float(curr_version[0:3]):
                 pass
             # Outdated client version
             elif client_version != curr_version:
