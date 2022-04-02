@@ -29,7 +29,7 @@ The bot and the API need to be run simultaneously.
 
 ## Requirements
 
-Python 3.6+ is required. For required packages, please refer to the included `requirements.txt`. 
+Python 3.10+ is required. For required packages, please refer to the included `requirements.txt`. 
 
 
 
@@ -85,7 +85,7 @@ First, download from GitHub, then set up `virtualenv`:
 
 ```bash
 cd FcomServer
-python3.6 -m venv ./venv
+python3.10 -m venv ./venv
 source ./venv/bin/activate
 pip3 install wheel
 pip3 install -r requirements.txt
